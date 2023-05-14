@@ -1,0 +1,13 @@
+{
+  "name": "root",
+  "version": "0.1.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Toshimichi <main@toshimichi.net> (https://toshimichi.net/)",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ]
+}
