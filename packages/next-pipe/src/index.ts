@@ -22,6 +22,7 @@ export interface MiddlewareChain<TReq, TRes, TArgs extends unknown[], TRootArgs 
   pipe<TArray extends Middleware<TReq, TRes, TArgs, unknown[]>[]>(
     ...middlewares: TArray
   ): MiddlewareChain<TReq, TRes, ComposedRets<TArray>, TRootArgs>
+  opts(options: Partial<MiddlewareOptions<TReq, TRes>>): this
 }
 
 type ComposedRets<
@@ -152,7 +153,11 @@ function convertInternal<TReq, TRes, TArgs extends unknown[], TRets extends unkn
     return chain.entrypoint(req, res, ...values)
   }
 
-  return Object.assign(entrypoint, { pipe })
+  function opts(options: Partial<MiddlewareOptions<TReq, TRes>>): MiddlewareChain<TReq, TRes, TRets, TRootArgs> {
+    return convertInternal(chain.opts(options))
+  }
+
+  return Object.assign(entrypoint, { pipe, opts })
 }
 
 export function middleware<TReq, TRes, TArgs extends unknown[]>(options?: Partial<MiddlewareOptions<TReq, TRes>>) {
