@@ -9,8 +9,30 @@ export const defaultMiddlewareOptions: MiddlewareOptions<never, never> = {
   },
 } as const
 
+export interface NextPipeSuccessful {
+  called: true
+  successful: true
+  errored: false
+  value: unknown
+}
+
+export interface NextPipeErrored {
+  called: true
+  successful: false
+  errored: true
+  error: unknown
+}
+
+export interface NextPipeInterrupted {
+  called: false
+  successful: false
+  errored: false
+}
+
+export type NextPipeResult = NextPipeSuccessful | NextPipeErrored | NextPipeInterrupted
+
 export interface NextPipe<TArgs extends unknown[]> {
-  (...args: TArgs): Promise<void>
+  (...args: TArgs): Promise<NextPipeResult>
 }
 
 export interface Middleware<TReq, TRes, TArgs extends unknown[] = [], TRets extends unknown[] = []> {
@@ -37,7 +59,7 @@ type ComposedRets<
   : TRets
 
 class Deferred<T> {
-  readonly promise: Promise<unknown>
+  readonly promise: Promise<T>
   resolve!: (value: T | PromiseLike<T>) => void
   reject!: (reason?: unknown) => void
   constructor() {
@@ -59,7 +81,7 @@ class InternalMiddlewareChain<
   readonly entrypoint: (req: TReq, res: TRes, ...values: TRootArgs) => Promise<unknown>
   options: MiddlewareOptions<TReq, TRes>
 
-  private readonly children: InternalMiddlewareChain<TReq, TRes, TRets, unknown[], TRootArgs>[] = []
+  private child: InternalMiddlewareChain<TReq, TRes, TRets, unknown[], TRootArgs> | undefined
 
   private constructor(
     middleware: Middleware<TReq, TRes, TArgs, TRets>,
@@ -74,18 +96,18 @@ class InternalMiddlewareChain<
   pipe<TArray extends Middleware<TReq, TRes, TRets, unknown[]>[]>(
     ...middlewares: TArray
   ): InternalMiddlewareChain<TReq, TRes, TRets, ComposedRets<TArray>, TRootArgs> {
-    async function middleware(
+    const composedMiddleware = async (
       req: TReq,
       res: TRes,
-      next: (...values: ComposedRets<TArray>) => unknown,
+      next: (...values: ComposedRets<TArray>) => Promise<NextPipeResult>,
       ...args: TRets
-    ): Promise<unknown> {
+    ): Promise<unknown> => {
       const result: unknown[] = []
-      const queue: Deferred<void>[] = []
+      const queue: Deferred<NextPipeResult>[] = []
 
-      const resolveQueue = async (): Promise<void> => {
+      const resolveQueue = async (value: NextPipeResult): Promise<void> => {
         for (const def of queue.reverse()) {
-          def.resolve()
+          def.resolve(value)
           await def.promise
         }
       }
@@ -94,7 +116,7 @@ class InternalMiddlewareChain<
         const subArgs = args.splice(0, middleware.length)
         let nextCalled = false
 
-        const deferred = new Deferred()
+        const deferred = new Deferred<NextPipeResult>()
 
         const promise = middleware(
           req,
@@ -104,26 +126,29 @@ class InternalMiddlewareChain<
             result.push(...values)
 
             queue.push(deferred)
-
-            await deferred.promise
+            return await deferred.promise
           },
           ...(subArgs as TRets)
         )
 
         if (!nextCalled) {
           const ret = await promise
-          await resolveQueue()
+          await resolveQueue({
+            called: false,
+            successful: false,
+            errored: false,
+          })
           return ret
         }
       }
 
       const ret = await next(...(result as ComposedRets<TArray>))
-      await resolveQueue()
+      resolveQueue(ret)
       return ret
     }
 
-    const chain = new InternalMiddlewareChain(middleware, this.entrypoint, this.options)
-    this.children.push(chain)
+    const chain = new InternalMiddlewareChain(composedMiddleware, this.entrypoint, this.options)
+    this.child = chain
 
     return chain
   }
@@ -137,17 +162,34 @@ class InternalMiddlewareChain<
     return this
   }
 
-  private async execute(req: TReq, res: TRes, ...values: TArgs): Promise<void> {
-    const next = async (...values: TRets) => {
-      for (const child of this.children) {
-        await child.execute(req, res, ...values)
+  private async execute(req: TReq, res: TRes, ...values: TArgs): Promise<NextPipeResult> {
+    const next = async (...values: TRets): Promise<NextPipeResult> => {
+      if (!this.child) {
+        return {
+          called: false,
+          successful: false,
+          errored: false,
+        }
       }
+      return await this.child.execute(req, res, ...values)
     }
 
     try {
-      await this.middleware(req, res, next, ...values)
+      const value = await this.middleware(req, res, next, ...values)
+      return {
+        called: true,
+        successful: true,
+        errored: false,
+        value,
+      }
     } catch (e) {
       await this.options.onError(req, res, e)
+      return {
+        called: true,
+        successful: false,
+        errored: true,
+        error: e,
+      }
     }
   }
 

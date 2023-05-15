@@ -8,13 +8,15 @@ describe("control-flow", () => {
       .pipe(
         async (req, res, next: NextPipe<[number]>) => {
           array.push(0)
-          await next(2)
-          array.push(5)
+          if ((await next(2)).successful) {
+            array.push(5)
+          }
         },
         async (req, res, next: NextPipe<[number]>) => {
           array.push(1)
-          await next(3)
-          array.push(4)
+          if ((await next(3)).successful) {
+            array.push(4)
+          }
         }
       )
       .pipe((req, res, next, a, b) => {
@@ -36,13 +38,15 @@ describe("control-flow", () => {
       .pipe(
         async (req, res, next: NextPipe<[number]>) => {
           array.push(0)
-          await next(2)
-          array.push(6)
+          if ((await next(2)).errored) {
+            array.push(6)
+          }
         },
         async (req, res, next: NextPipe<[number]>) => {
           array.push(1)
-          await next(3)
-          array.push(5)
+          if ((await next(3)).errored) {
+            array.push(5)
+          }
         }
       )
       .pipe(
