@@ -116,20 +116,24 @@ class InternalMiddlewareChain<
         const subArgs = args.splice(0, middleware.length)
         let nextCalled = false
 
-        const deferred = new Deferred<NextPipeResult>()
+        const nextCalledDeferred = new Deferred<boolean>()
+        const resultDeferred = new Deferred<NextPipeResult>()
 
         const promise = middleware(
           req,
           res,
           async (...values) => {
             nextCalled = true
+            nextCalledDeferred.resolve(true)
             result.push(...values)
 
-            queue.push(deferred)
-            return await deferred.promise
+            queue.push(resultDeferred)
+            return await resultDeferred.promise
           },
           ...(subArgs as TRets)
         )
+
+        await Promise.race([promise, nextCalledDeferred])
 
         if (!nextCalled) {
           const ret = await promise
@@ -143,7 +147,7 @@ class InternalMiddlewareChain<
       }
 
       const ret = await next(...(result as ComposedRets<TArray>))
-      resolveQueue(ret)
+      await resolveQueue(ret)
       return ret
     }
 
