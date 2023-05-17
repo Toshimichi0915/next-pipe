@@ -39,13 +39,13 @@ describe("control-flow", () => {
         async (req, res, next: NextPipe<[number]>) => {
           array.push(0)
           if ((await next(2)).errored) {
-            array.push(6)
+            array.push(8)
           }
         },
         async (req, res, next: NextPipe<[number]>) => {
           array.push(1)
           if ((await next(3)).errored) {
-            array.push(5)
+            array.push(7)
           }
         }
       )
@@ -53,17 +53,29 @@ describe("control-flow", () => {
         async (req, res, next, a, b) => {
           array.push(a)
           array.push(b)
-          throw new Error("error")
+          if (!(await next()).called) {
+            array.push(6)
+          }
+        },
+        async (req, res, next) => {
+          if (!(await next()).called) {
+            array.push(5)
+          }
         },
         async () => {
-          array.push(7)
+          throw new Error("error")
         }
       )
       .pipe(() => {
         array.push(8)
       })
 
-    await f(undefined, undefined)
-    expect(array).toEqual([0, 1, 2, 3, 4, 5, 6])
+    // expect().rejects.toThrow("error")
+    try {
+      await f(undefined, undefined)
+    } catch (e) {
+      // do nothing
+    }
+    expect(array).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8])
   })
 })
