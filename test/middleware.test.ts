@@ -70,12 +70,7 @@ describe("control-flow", () => {
         array.push(8)
       })
 
-    // expect().rejects.toThrow("error")
-    try {
-      await f(undefined, undefined)
-    } catch (e) {
-      // do nothing
-    }
+    await expect(f(undefined, undefined)).rejects.toThrow("error")
     expect(array).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8])
   })
 })
