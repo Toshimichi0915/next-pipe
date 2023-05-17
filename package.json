@@ -13,6 +13,14 @@
   "keywords": [],
   "author": "Toshimichi <main@toshimichi.net> (https://toshimichi.net/)",
   "license": "MIT",
+  "homepage": "https://github.com/Toshimichi0915/next-pipe",
+  "bugs": {
+    "url": "https://github.com/Toshimichi0915/next-pipe/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Toshimichi0915/next-pipe.git"
+  },
   "devDependencies": {
     "@types/node": "^20.1.4",
     "@typescript-eslint/eslint-plugin": "^5.59.5",
