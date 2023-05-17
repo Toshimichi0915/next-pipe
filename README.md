@@ -10,7 +10,7 @@ npm install next-pipe
 
 ## Example
 
-```js
+```ts
 import express from "express"
 import { NextPipe, middleware } from "../src"
 
