@@ -16,7 +16,7 @@ import { NextPipe, middleware } from "../src"
 
 const app = express()
 
-app.get("/", middleware<express.Request, express.Response, []>()
+app.get("/", middleware<express.Request, express.Response>()
   .pipe(async (req, res, next: NextPipe[string]) => {
     // user check middleware
     const userList = ["John", "Jane", "Jack"]

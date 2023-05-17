@@ -284,7 +284,7 @@ function convertInternal<TReq, TRes, TArgs extends unknown[], TRets extends unkn
   return Object.assign(entrypoint, { pipe, opts })
 }
 
-export function middleware<TReq, TRes, TArgs extends unknown[]>(options?: Partial<MiddlewareOptions<TReq, TRes>>) {
+export function middleware<TReq, TRes, TArgs extends unknown[] = []>(options?: Partial<MiddlewareOptions<TReq, TRes>>) {
   const chain = InternalMiddlewareChain.create<TReq, TRes, TArgs>({
     ...defaultMiddlewareOptions,
     ...options,

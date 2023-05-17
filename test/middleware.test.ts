@@ -4,7 +4,7 @@ import { describe, it } from "vitest"
 describe("control-flow", () => {
   it("simple", async ({ expect }) => {
     const array: number[] = []
-    const f = middleware<undefined, undefined, []>()
+    const f = middleware<undefined, undefined>()
       .pipe(
         async (req, res, next: NextPipe<[number]>) => {
           array.push(0)
@@ -30,7 +30,7 @@ describe("control-flow", () => {
 
   it("error", async ({ expect }) => {
     const array: number[] = []
-    const f = middleware<undefined, undefined, []>({
+    const f = middleware<undefined, undefined>({
       onError: async () => {
         array.push(4)
       },
