@@ -6,25 +6,27 @@ export interface ZodLike<T> {
 }
 
 export interface YupLike<T> {
-  validate: (value: unknown) => T
+  cast: (value: unknown) => T
 }
 
-type Parser<T> = ZodLike<T> | YupLike<T>
+type FunctionalParser<T> = (value: unknown) => T
 
-type InternalParser<T> = (value: unknown) => T
+type Parser<T> = ZodLike<T> | YupLike<T> | FunctionalParser<T>
 
-function convertInternal<T>(parser: Parser<T>): InternalParser<T> {
+function uniformParser<T>(parser: Parser<T>): FunctionalParser<T> {
   if ("parse" in parser) {
     return (value: unknown) => parser.parse(value)
-  } else if ("validate" in parser) {
-    return (value: unknown) => parser.validate(value)
+  } else if ("cast" in parser) {
+    return (value: unknown) => parser.cast(value)
+  } else if (typeof parser === "function") {
+    return parser
   }
 
   throw new Error("Invalid parser")
 }
 
 export function withValidatedBody<T>(parser: Parser<T>): Middleware<ExpressRequestLike, ExpressResponseLike, [], [T]> {
-  const internalParser = convertInternal(parser)
+  const internalParser = uniformParser(parser)
 
   return async (req: ExpressRequestLike, res: ExpressResponseLike, next: NextPipe<[T]>) => {
     try {

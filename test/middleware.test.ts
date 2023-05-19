@@ -1,76 +1,172 @@
-import { NextPipe, middleware } from "../src"
 import { describe, it } from "vitest"
+import { ExpressRequestLike, ExpressResponseLike, NextPipe, NextPipeResult, middleware } from "../src"
+import { createExpressRequest, createExpressResponse } from "./adapters/common"
 
-describe("control-flow", () => {
-  it("simple", async ({ expect }) => {
-    const array: number[] = []
-    const f = middleware<undefined, undefined>()
-      .pipe(
-        async (req, res, next: NextPipe<[number]>) => {
-          array.push(0)
-          if ((await next(2)).successful) {
-            array.push(5)
-          }
-        },
-        async (req, res, next: NextPipe<[number]>) => {
-          array.push(1)
-          if ((await next(3)).successful) {
-            array.push(4)
-          }
-        }
-      )
-      .pipe((req, res, next, a, b) => {
-        array.push(a)
-        array.push(b)
-      })
-
-    await f(undefined, undefined)
-    expect(array).toEqual([0, 1, 2, 3, 4, 5])
+describe("middleware", () => {
+  it("empty", async ({ expect }) => {
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>()
+    expect(await f(createExpressRequest(), createExpressResponse())).toBe(undefined)
   })
 
-  it("error", async ({ expect }) => {
-    const array: number[] = []
-    const f = middleware<undefined, undefined>({
-      onError: async () => {
-        array.push(4)
-      },
-    })
-      .pipe(
-        async (req, res, next: NextPipe<[number]>) => {
-          array.push(0)
-          if ((await next(2)).errored) {
-            array.push(8)
-          }
-        },
-        async (req, res, next: NextPipe<[number]>) => {
-          array.push(1)
-          if ((await next(3)).errored) {
-            array.push(7)
-          }
-        }
-      )
-      .pipe(
-        async (req, res, next, a, b) => {
-          array.push(a)
-          array.push(b)
-          if (!(await next()).called) {
-            array.push(6)
-          }
-        },
-        async (req, res, next) => {
-          if (!(await next()).called) {
-            array.push(5)
-          }
-        },
-        async () => {
-          throw new Error("error")
-        }
-      )
-      .pipe(() => {
-        array.push(8)
+  it("simple", async ({ expect }) => {
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>().pipe((req) => "Hello, " + req.body)
+
+    expect(await f(createExpressRequest("Toshimichi"), createExpressResponse())).toBe("Hello, Toshimichi")
+  })
+
+  it("simple chain", async ({ expect }) => {
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>()
+      .pipe(async (req, res, next: NextPipe<[string]>) => {
+        await next("Toshimichi")
+      })
+      .pipe((req, res, next, name) => {
+        return "Hello, " + name
       })
 
-    await expect(f(undefined, undefined)).rejects.toThrow("error")
-    expect(array).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8])
+    expect(await f(createExpressRequest("Toshimichi"), createExpressResponse())).toBe("Hello, Toshimichi")
+  })
+
+  it("simple error", async ({ expect }) => {
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>().pipe(async () => {
+      throw new Error("Error!")
+    })
+
+    await expect(f(createExpressRequest(), createExpressResponse())).rejects.toThrow("Error!")
+  })
+
+  it("simple error handling", async ({ expect }) => {
+    let onErrorCalled = false
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>({
+      onError: () => {
+        onErrorCalled = true
+      },
+    }).pipe(async () => {
+      throw new Error("Error!")
+    })
+
+    await expect(f(createExpressRequest(), createExpressResponse())).rejects.toThrow("Error!")
+    expect(onErrorCalled).toBe(true)
+  })
+
+  it("options", async ({ expect }) => {
+    let onErrorCalled = false
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>()
+      .pipe(async (req, res, next) => {
+        await next()
+      })
+      .opts({
+        onError: () => {
+          onErrorCalled = true
+        },
+      })
+      .pipe(async () => {
+        throw new Error("Error!")
+      })
+
+    await expect(f(createExpressRequest(), createExpressResponse())).rejects.toThrow("Error!")
+    expect(onErrorCalled).toBe(true)
+  })
+
+  it("options inheritance", async ({ expect }) => {
+    let onErrorCalled = false
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>()
+      .pipe(async (req, res, next) => {
+        await next()
+      })
+      .opts({
+        onError: () => {
+          onErrorCalled = true
+        },
+      })
+      .pipe(async (req, res, next) => {
+        await next()
+      })
+      .pipe(async () => {
+        throw new Error("Error!")
+      })
+
+    await expect(f(createExpressRequest(), createExpressResponse())).rejects.toThrow("Error!")
+    expect(onErrorCalled).toBe(true)
+  })
+
+  it("parallel", async ({ expect }) => {
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>()
+      .pipe(
+        async (req, res, next: NextPipe<[string]>) => {
+          await next("Toshimichi")
+        },
+        async (req, res, next: NextPipe<[string]>) => {
+          await next("Hello, ")
+        }
+      )
+      .pipe((req, res, next, name, message) => {
+        return message + name
+      })
+
+    expect(await f(createExpressRequest(), createExpressResponse())).toBe("Hello, Toshimichi")
+  })
+
+  it("error in parallel", async ({ expect }) => {
+    let nextPipeResult: NextPipeResult | undefined = undefined
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>().pipe(
+      async (req, res, next) => {
+        nextPipeResult = await next()
+      },
+      async () => {
+        throw new Error("Error!")
+      }
+    )
+
+    await expect(f(createExpressRequest(), createExpressResponse())).rejects.toThrow("Error!")
+    expect(nextPipeResult).toStrictEqual({
+      successful: false,
+      errored: false,
+      called: false,
+    })
+  })
+
+  it("error in chain", async ({ expect }) => {
+    let nextPipeResult: NextPipeResult | undefined = undefined
+    const error = new Error("Error!")
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>()
+      .pipe(async (req, res, next) => {
+        nextPipeResult = await next()
+      })
+      .pipe(async () => {
+        throw error
+      })
+
+    await expect(f(createExpressRequest(), createExpressResponse())).rejects.toThrow("Error!")
+    expect(nextPipeResult).toStrictEqual({
+      successful: false,
+      errored: true,
+      called: true,
+      error: error,
+    })
+  })
+
+  it("error after next", async ({ expect }) => {
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>()
+      .pipe(async (req, res, next) => {
+        await next()
+        throw new Error("Error!")
+      })
+      .pipe(async () => {
+        return "Hello, world!"
+      })
+
+    await expect(f(createExpressRequest(), createExpressResponse())).rejects.toThrow("Error!")
+  })
+
+  it("error in options", async ({ expect }) => {
+    const f = middleware<ExpressRequestLike, ExpressResponseLike>({
+      onError: () => {
+        throw new Error("Error!")
+      },
+    }).pipe(() => {
+      throw "Hello, world!"
+    })
+
+    await expect(f(createExpressRequest(), createExpressResponse())).rejects.toThrow("Error!")
   })
 })

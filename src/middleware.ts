@@ -116,21 +116,34 @@ class InternalMiddlewareChain<
     ): Promise<NextPipeResult> => {
       const result: unknown[] = []
       const queue: Deferred<NextPipeResult>[] = []
+      const promises: Promise<unknown>[] = []
 
       const resolveQueue = async (value: NextPipeResult): Promise<void> => {
         for (const def of queue.reverse()) {
           def.resolve(value)
           await def.promise
         }
+
+        await Promise.all(promises)
       }
 
       const handleError = async (e: unknown): Promise<NextPipeResult> => {
-        await this.options.onError(req, res, e)
-        await resolveQueue({
-          called: false,
-          successful: false,
-          errored: false,
-        })
+        try {
+          await this.options.onError(req, res, e)
+          await resolveQueue({
+            called: false,
+            successful: false,
+            errored: false,
+          })
+        } catch (e) {
+          // Could not handle error
+          return {
+            called: true,
+            successful: false,
+            errored: true,
+            error: e,
+          }
+        }
 
         return {
           called: true,
@@ -142,22 +155,19 @@ class InternalMiddlewareChain<
 
       for (const middleware of middlewares) {
         const subArgs = args.splice(0, middleware.length)
-        let nextCalled = false
 
-        const nextCalledDeferred = new Deferred<boolean>()
-        const resultDeferred = new Deferred<NextPipeResult>()
+        const deferred = new Deferred<NextPipeResult>()
+        const next = new Deferred<boolean>()
 
         const asyncMiddleware = async () => {
-          return middleware(
+          return await middleware(
             req,
             res,
             async (...values) => {
-              nextCalled = true
-              nextCalledDeferred.resolve(true)
+              next.resolve(true)
               result.push(...values)
-
-              queue.push(resultDeferred)
-              return await resultDeferred.promise
+              queue.push(deferred)
+              return await deferred.promise
             },
             ...(subArgs as TRets)
           )
@@ -166,31 +176,35 @@ class InternalMiddlewareChain<
         const promise = asyncMiddleware()
 
         try {
-          await Promise.race([promise, nextCalledDeferred])
+          await Promise.race([promise, next])
         } catch (e) {
           return await handleError(e)
         }
 
-        if (!nextCalled) {
-          let ret
-          try {
-            ret = await promise
-          } catch (e) {
-            return await handleError(e)
-          }
+        // next() was called
+        if (next.resolved) {
+          promises.push(promise)
+          continue
+        }
 
-          await resolveQueue({
-            called: false,
-            successful: false,
-            errored: false,
-          })
+        let ret
+        try {
+          ret = await promise
+        } catch (e) {
+          return await handleError(e)
+        }
 
-          return {
-            called: true,
-            successful: true,
-            errored: false,
-            value: ret,
-          }
+        await resolveQueue({
+          called: false,
+          successful: false,
+          errored: false,
+        })
+
+        return {
+          called: true,
+          successful: true,
+          errored: false,
+          value: ret,
         }
       }
 

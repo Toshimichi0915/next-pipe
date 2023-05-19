@@ -1,2 +1,11 @@
+# npm
 node_modules
+
+# Typescript
 dist
+
+# vitest
+coverage
+
+# IntelliJ
+.idea

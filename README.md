@@ -12,30 +12,24 @@ npm install next-pipe
 
 ```ts
 import express from "express"
-import { NextPipe, middleware } from "../src"
+import { z } from "zod"
+import { middleware, withValidatedBody } from "../src"
 
 const app = express()
 
-app.get("/", middleware<express.Request, express.Response>()
-  .pipe(async (req, res, next: NextPipe[string]) => {
-    // user check middleware
-    const userList = ["John", "Jane", "Jack"]
-    if (req.query.user in userList) {
-      await next(req.query.user)
-    } else {
-      res.status(400).send("Invalid user")
-    }
-  }, async (req, res, next: NextPipe<[string]>) => {
-    // origin check middleware
-    const originList = ["http://localhost", "https://example.com"]
-    if (req.headers.origin in originList) {
-      await next(req.query.origin)
-    } else {
-      res.status(400).send("Invalid origin")
-    }
-  })
-  .pipe((req, res, next, name, origin) => {
-    res.send(`Hello ${name} from ${origin}`)
-  })
+const userSchema = z.object({
+  name: z.string(),
+  age: z.number(),
+})
+
+app.get(
+  "/",
+  middleware<express.Request, express.Response>()
+    .pipe(withValidatedBody(userSchema))
+    .pipe((req, res, next, data) => {
+      res.send(`Hello ${data.name}(${data.age})!`)
+    })
 )
+
+app.listen(3000)
 ```

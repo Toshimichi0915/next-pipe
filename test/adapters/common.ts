@@ -1,6 +1,6 @@
 import { ExpressRequestLike, ExpressResponseLike } from "../../src"
 
-export function createExpressRequest(body: unknown): ExpressRequestLike {
+export function createExpressRequest(body: unknown = undefined): ExpressRequestLike {
   return {
     body,
   }

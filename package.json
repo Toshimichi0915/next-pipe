@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf dist && tsc",
-    "test": "vitest"
+    "test": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "files": [
     "dist"
@@ -24,12 +25,14 @@
   "devDependencies": {
     "@types/node": "^20.1.4",
     "@typescript-eslint/eslint-plugin": "^5.59.5",
+    "@vitest/coverage-c8": "^0.31.1",
     "eslint": "^8.40.0",
     "eslint-config-prettier": "^8.8.0",
     "prettier": "^2.8.8",
     "rimraf": "^5.0.0",
     "typescript": "^5.0.4",
     "vitest": "^0.31.0",
+    "yup": "^1.1.1",
     "zod": "^3.21.4"
   }
 }
