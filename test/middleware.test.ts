@@ -11,7 +11,7 @@ describe("middleware", () => {
   it("simple", async ({ expect }) => {
     const f = middleware<ExpressRequestLike, ExpressResponseLike>().pipe((req) => "Hello, " + req.body)
 
-    expect(await f(createExpressRequest("Toshimichi"), createExpressResponse())).toBe("Hello, Toshimichi")
+    expect(await f(createExpressRequest({ body: "Toshimichi" }), createExpressResponse())).toBe("Hello, Toshimichi")
   })
 
   it("simple chain", async ({ expect }) => {
@@ -23,7 +23,7 @@ describe("middleware", () => {
         return "Hello, " + name
       })
 
-    expect(await f(createExpressRequest("Toshimichi"), createExpressResponse())).toBe("Hello, Toshimichi")
+    expect(await f(createExpressRequest({ body: "Toshimichi" }), createExpressResponse())).toBe("Hello, Toshimichi")
   })
 
   it("simple error", async ({ expect }) => {

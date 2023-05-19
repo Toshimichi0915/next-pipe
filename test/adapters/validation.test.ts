@@ -4,7 +4,7 @@ import yup from "yup"
 import { ExpressRequestLike, ExpressResponseLike, middleware, withValidatedBody } from "../../src"
 import { createExpressRequest, createExpressResponse } from "./common"
 
-describe("validation", () => {
+describe("withValidatedBody", () => {
   it("zod", async ({ expect }) => {
     const zodSchema = z.object({
       name: z.string(),
@@ -13,10 +13,12 @@ describe("validation", () => {
       .pipe(withValidatedBody(zodSchema))
       .pipe((req, res, next, body) => body)
 
-    expect(await f(createExpressRequest({ name: "abc", age: 123 }), createExpressResponse())).toEqual({ name: "abc" })
+    expect(await f(createExpressRequest({ body: { name: "abc", age: 123 } }), createExpressResponse())).toEqual({
+      name: "abc",
+    })
 
     const response = createExpressResponse()
-    await f(createExpressRequest({ age: 123 }), response)
+    await f(createExpressRequest({ body: { age: 123 } }), response)
     expect(response.currentStatus).toEqual(400)
   })
 
@@ -29,10 +31,10 @@ describe("validation", () => {
       .pipe(withValidatedBody(yupSchema))
       .pipe((req, res, next, body) => body)
 
-    expect(await f(createExpressRequest({ name: "abc" }), createExpressResponse())).toEqual({ name: "abc" })
+    expect(await f(createExpressRequest({ body: { name: "abc" } }), createExpressResponse())).toEqual({ name: "abc" })
 
     const response = createExpressResponse()
-    await f(createExpressRequest({ age: 123 }), response)
+    await f(createExpressRequest({ body: { age: 123 } }), response)
     expect(response.currentStatus).toEqual(400)
   })
 
@@ -46,10 +48,10 @@ describe("validation", () => {
       .pipe(withValidatedBody(parser))
       .pipe((req, res, next, body) => body)
 
-    expect(await f(createExpressRequest("abc"), createExpressResponse())).toEqual("abc nyoom")
+    expect(await f(createExpressRequest({ body: "abc" }), createExpressResponse())).toEqual("abc nyoom")
 
     const response = createExpressResponse()
-    await f(createExpressRequest(123), response)
+    await f(createExpressRequest({ body: 123 }), response)
     expect(response.currentStatus).toEqual(400)
   })
 })

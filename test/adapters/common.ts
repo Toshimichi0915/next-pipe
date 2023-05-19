@@ -1,8 +1,10 @@
 import { ExpressRequestLike, ExpressResponseLike } from "../../src"
 
-export function createExpressRequest(body: unknown = undefined): ExpressRequestLike {
+export function createExpressRequest(def: Partial<ExpressRequestLike> = {}): ExpressRequestLike {
   return {
-    body,
+    method: "GET",
+    body: undefined,
+    ...def,
   }
 }
 
