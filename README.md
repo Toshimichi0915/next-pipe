@@ -26,14 +26,12 @@ app.get(
   "/",
   middleware<express.Request, express.Response>()
     .pipe(withValidatedBody(userSchema))
-      withMethods(({ get, put }) => {
-        get().pipe(() => {
-          return "Hello, world"
-        })
-        put().pipe(() => {
-          return "Hello, Toshimichi!"
+    .pipe(withMethods(({ post }) => {
+        post().pipe((req, res, body) => {
+          return `Hello, ${body.name}!`
         })
       })
+    )
 )
 
 app.listen(3000)
