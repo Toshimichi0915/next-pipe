@@ -13,7 +13,7 @@ npm install next-pipe
 ```ts
 import express from "express"
 import { z } from "zod"
-import { middleware, withValidatedBody } from "../src"
+import { middleware, withValidatedBody, withMethods } from "next-pipe"
 
 const app = express()
 
@@ -26,9 +26,14 @@ app.get(
   "/",
   middleware<express.Request, express.Response>()
     .pipe(withValidatedBody(userSchema))
-    .pipe((req, res, next, data) => {
-      res.send(`Hello ${data.name}(${data.age})!`)
-    })
+      withMethods(({ get, put }) => {
+        get().pipe(() => {
+          return "Hello, world"
+        })
+        put().pipe(() => {
+          return "Hello, Toshimichi!"
+        })
+      })
 )
 
 app.listen(3000)

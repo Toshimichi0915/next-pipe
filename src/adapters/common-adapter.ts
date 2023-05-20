@@ -1,4 +1,4 @@
-import { Middleware } from "../middleware"
+import { Middleware, MiddlewareChain, createFakeMiddlewareChain, middleware } from "../middleware"
 
 export interface ExpressRequestLike {
   body: unknown
@@ -10,22 +10,39 @@ export interface ExpressResponseLike {
   json(body: unknown): unknown
 }
 
-export type AvailableMethods = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
-
-export type MethodOption<TReq, TRes, TArgs extends unknown[]> = (req: TReq, res: TRes, ...args: TArgs) => unknown
-
-export type MethodOptions<TReq, TRes, TArgs extends unknown[]> = {
-  [key in AvailableMethods]?: MethodOption<TReq, TRes, TArgs>
+export interface MethodHandler<TReq, TRes, TArgs extends unknown[], TRootArgs extends unknown[]> {
+  get(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
+  post(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
+  put(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
+  patch(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
+  delete(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
 }
 
 export function withMethods<TReq extends ExpressRequestLike, TRes extends ExpressResponseLike, TArgs extends unknown[]>(
-  options: MethodOptions<TReq, TRes, TArgs>
+  f: (handler: MethodHandler<TReq, TRes, TArgs, TArgs>) => unknown
 ): Middleware<TReq, TRes, TArgs> {
   return async (req: TReq, res: TRes, next, ...args: TArgs) => {
-    const methodOption = options[req.method as AvailableMethods]
+    let result: MiddlewareChain<TReq, TRes, TArgs, TArgs> | undefined
 
-    if (methodOption) {
-      return await methodOption(req, res, ...args)
+    const createMiddleware = (method: string) => {
+      if (req.method !== method) return createFakeMiddlewareChain<TReq, TRes, TArgs, unknown[], TArgs>()
+      if (result) throw new Error(`Method ${method} already defined`)
+      result = middleware<TReq, TRes, TArgs>()
+      return result
+    }
+
+    const handler: MethodHandler<TReq, TRes, TArgs, TArgs> = {
+      get: () => createMiddleware("GET"),
+      post: () => createMiddleware("POST"),
+      put: () => createMiddleware("PUT"),
+      patch: () => createMiddleware("PATCH"),
+      delete: () => createMiddleware("DELETE"),
+    }
+
+    f(handler)
+
+    if (result) {
+      return result(req, res, ...args)
     } else {
       res.status(405)
       res.json({ error: "Method not allowed" })

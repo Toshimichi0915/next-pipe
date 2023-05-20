@@ -1,6 +1,6 @@
 import { Middleware } from "../middleware"
-import { AuthOptions, Session } from "next-auth"
-import { NextApiRequest, NextApiResponse } from "next"
+import type { AuthOptions, Session } from "next-auth"
+import type { NextApiRequest, NextApiResponse } from "next"
 
 type RequireSession<T> = T extends true ? Session : Session | undefined
 
