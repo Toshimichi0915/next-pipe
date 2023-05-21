@@ -1,3 +1,6 @@
+// Request polyfill
+import "node-fetch"
+
 import { NextApiRequest, NextApiResponse } from "next"
 import { afterAll, beforeAll, describe, it, vitest } from "vitest"
 import { NextPipe, middleware, withServerSession } from "../../src"
