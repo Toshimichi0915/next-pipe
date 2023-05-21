@@ -312,7 +312,7 @@ class InternalMiddlewareChain<
         const promise = asyncMiddleware()
 
         try {
-          await Promise.race([promise, next])
+          await Promise.race([promise, next.promise])
         } catch (e) {
           return await handleError(e)
         }
