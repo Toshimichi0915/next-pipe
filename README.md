@@ -1,5 +1,8 @@
 # next-pipe
 
+[![Unit Test](https://github.com/Toshimichi0915/next-pipe/actions/workflows/node.js.yml/badge.svg)](https://github.com/Toshimichi0915/next-pipe/actions/workflows/node.js.yml)
+[![npm version](https://badge.fury.io/js/next-pipe.svg)](https://badge.fury.io/js/next-pipe)
+
 Provides a simple way to pipe data through a series of functions.
 
 ## Installation

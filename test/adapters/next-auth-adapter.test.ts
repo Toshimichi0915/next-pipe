@@ -3,6 +3,10 @@ import { afterAll, beforeAll, describe, it, vitest } from "vitest"
 import { NextPipe, middleware, withServerSession } from "../../src"
 import core from "next-auth/core"
 import { AuthOptions, Session } from "next-auth"
+import createFetchMock from "vitest-fetch-mock"
+
+const fetchMocker = createFetchMock(vitest)
+fetchMocker.enableMocks()
 
 const authOptions = {
   providers: [],
