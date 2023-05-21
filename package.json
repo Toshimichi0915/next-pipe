@@ -1,7 +1,7 @@
 {
   "name": "next-pipe",
-  "version": "0.1.1",
-  "description": "",
+  "version": "0.1.2",
+  "description": "Provides a simple way to pipe data through a series of functions.",
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf dist && tsc",
