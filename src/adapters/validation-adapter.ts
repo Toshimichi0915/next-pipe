@@ -25,7 +25,9 @@ function uniformParser<T>(parser: Parser<T>): FunctionalParser<T> {
   throw new Error("Invalid parser")
 }
 
-export function withValidatedBody<TReq extends ExpressRequestLike, TRes extends ExpressResponseLike, T>(parser: Parser<T>): Middleware<TReq, TRes, [], [T]> {
+export function withValidatedBody<TReq extends ExpressRequestLike, TRes extends ExpressResponseLike, T>(
+  parser: Parser<T>
+): Middleware<TReq, TRes, [], [T]> {
   const internalParser = uniformParser(parser)
 
   return async (req: TReq, res: TRes, next: NextPipe<[T]>) => {

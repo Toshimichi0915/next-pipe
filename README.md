@@ -26,7 +26,8 @@ app.get(
   "/",
   middleware<express.Request, express.Response>()
     .pipe(withValidatedBody(userSchema))
-    .pipe(withMethods(({ post }) => {
+    .pipe(
+      withMethods(({ post }) => {
         post().pipe((req, res, body) => {
           return `Hello, ${body.name}!`
         })

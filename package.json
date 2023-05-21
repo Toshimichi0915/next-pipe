@@ -6,7 +6,9 @@
   "scripts": {
     "build": "rimraf dist && tsc",
     "test": "vitest",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "fmt": "prettier --write .",
+    "lint": "eslint . --ext .ts"
   },
   "files": [
     "dist"

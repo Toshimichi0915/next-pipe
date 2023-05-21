@@ -1,12 +1,6 @@
 import { z } from "zod"
 import { describe, it } from "vitest"
-import {
-  ExpressRequestLike,
-  ExpressResponseLike,
-  middleware,
-  withMethods,
-  withValidatedBody,
-} from "../../src"
+import { ExpressRequestLike, ExpressResponseLike, middleware, withMethods, withValidatedBody } from "../../src"
 import { createExpressRequest, createExpressResponse } from "./common"
 
 describe("withMethods", () => {
@@ -54,7 +48,7 @@ describe("withMethods", () => {
           put().pipe((req, res, next, body) => {
             return "Hello, " + body.name
           })
-        }),
+        })
       )
 
     expect(
