@@ -1,14 +1,7 @@
+import { IncomingMessage } from "http"
 import { Middleware, MiddlewareChain, middleware } from "../middleware"
-
-export interface ExpressRequestLike {
-  body: unknown
-  method?: string
-}
-
-export interface ExpressResponseLike {
-  status(code: number): unknown
-  json(body: unknown): unknown
-}
+import { ServerResponse } from "http"
+import { send } from "micro"
 
 export interface MethodHandler<TReq, TRes, TArgs extends unknown[], TRootArgs extends unknown[]> {
   get(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
@@ -18,7 +11,7 @@ export interface MethodHandler<TReq, TRes, TArgs extends unknown[], TRootArgs ex
   delete(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
 }
 
-export function withMethods<TReq extends ExpressRequestLike, TRes extends ExpressResponseLike, TArgs extends unknown[]>(
+export function withMethods<TReq extends IncomingMessage, TRes extends ServerResponse, TArgs extends unknown[]>(
   f: (handler: MethodHandler<TReq, TRes, TArgs, TArgs>) => unknown
 ): Middleware<TReq, TRes, TArgs> {
   const methods: { [key in string]?: MiddlewareChain<TReq, TRes, TArgs, TArgs> } = {}
@@ -46,8 +39,7 @@ export function withMethods<TReq extends ExpressRequestLike, TRes extends Expres
     if (result) {
       return result(req, res, ...args)
     } else {
-      res.status(405)
-      res.json({ error: "Method not allowed" })
+      send(res, 405, { error: "Method not allowed" })
     }
   }
 }

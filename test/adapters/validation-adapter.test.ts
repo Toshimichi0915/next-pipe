@@ -1,25 +1,34 @@
 import { describe, it } from "vitest"
+import fetch from "node-fetch"
 import { z } from "zod"
 import yup from "yup"
-import { ExpressRequestLike, ExpressResponseLike, middleware, withValidatedBody } from "../../src"
-import { createExpressRequest, createExpressResponse } from "./common"
+import { middleware, withValidatedBody } from "../../src"
+import { IncomingMessage, ServerResponse, createServer } from "http"
+import { send } from "micro"
+import listen from "test-listen"
 
 describe("withValidatedBody", () => {
   it("zod", async ({ expect }) => {
     const zodSchema = z.object({
       name: z.string(),
     })
-    const f = middleware<ExpressRequestLike, ExpressResponseLike>()
-      .pipe(withValidatedBody(zodSchema))
-      .pipe((req, res, next, body) => body)
 
-    expect(await f(createExpressRequest({ body: { name: "abc", age: 123 } }), createExpressResponse())).toEqual({
+    const server = createServer(
+      middleware<IncomingMessage, ServerResponse>()
+        .pipe(withValidatedBody(zodSchema))
+        .pipe((req, res, next, body) => {
+          send(res, 200, body)
+        })
+    )
+
+    const response = await fetch(await listen(server), {
+      method: "POST",
+      body: JSON.stringify({ name: "abc", age: 123 }),
+    }).then((res) => res.json())
+
+    expect(response).toEqual({
       name: "abc",
     })
-
-    const response = createExpressResponse()
-    await f(createExpressRequest({ body: { age: 123 } }), response)
-    expect(response.currentStatus).toEqual(400)
   })
 
   it("yup", async ({ expect }) => {
@@ -27,15 +36,20 @@ describe("withValidatedBody", () => {
       name: yup.string().required(),
     })
 
-    const f = middleware<ExpressRequestLike, ExpressResponseLike>()
-      .pipe(withValidatedBody(yupSchema))
-      .pipe((req, res, next, body) => body)
+    const server = createServer(
+      middleware<IncomingMessage, ServerResponse>()
+        .pipe(withValidatedBody(yupSchema))
+        .pipe((req, res, next, body) => send(res, 200, body))
+    )
 
-    expect(await f(createExpressRequest({ body: { name: "abc" } }), createExpressResponse())).toEqual({ name: "abc" })
+    const response = await fetch(await listen(server), {
+      method: "POST",
+      body: JSON.stringify({ name: "abc" }),
+    })
 
-    const response = createExpressResponse()
-    await f(createExpressRequest({ body: { age: 123 } }), response)
-    expect(response.currentStatus).toEqual(400)
+    expect(await response.json()).toEqual({
+      name: "abc",
+    })
   })
 
   it("custom", async ({ expect }) => {
@@ -44,14 +58,17 @@ describe("withValidatedBody", () => {
       throw new Error("Invalid value")
     }
 
-    const f = middleware<ExpressRequestLike, ExpressResponseLike>()
-      .pipe(withValidatedBody(parser))
-      .pipe((req, res, next, body) => body)
+    const server = createServer(
+      middleware<IncomingMessage, ServerResponse>()
+        .pipe(withValidatedBody(parser))
+        .pipe((req, res, next, body) => send(res, 200, body))
+    )
 
-    expect(await f(createExpressRequest({ body: "abc" }), createExpressResponse())).toEqual("abc nyoom")
+    const response = await fetch(await listen(server), {
+      method: "POST",
+      body: JSON.stringify("abc"),
+    })
 
-    const response = createExpressResponse()
-    await f(createExpressRequest({ body: 123 }), response)
-    expect(response.currentStatus).toEqual(400)
+    expect(await response.text()).toEqual("abc nyoom")
   })
 })

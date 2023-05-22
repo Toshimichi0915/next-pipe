@@ -1,5 +1,7 @@
+import { IncomingMessage } from "http"
 import { Middleware, NextPipe } from "../middleware"
-import { ExpressRequestLike, ExpressResponseLike } from "./common-adapter"
+import { ServerResponse } from "http"
+import { json, send } from "micro"
 
 export interface ZodLike<T> {
   parse: (value: unknown) => T
@@ -25,18 +27,17 @@ function uniformParser<T>(parser: Parser<T>): FunctionalParser<T> {
   throw new Error("Invalid parser")
 }
 
-export function withValidatedBody<TReq extends ExpressRequestLike, TRes extends ExpressResponseLike, T>(
+export function withValidatedBody<TReq extends IncomingMessage, TRes extends ServerResponse, T>(
   parser: Parser<T>
 ): Middleware<TReq, TRes, [], [T]> {
   const internalParser = uniformParser(parser)
 
   return async (req: TReq, res: TRes, next: NextPipe<[T]>) => {
     try {
-      const parsed = internalParser(req.body)
+      const parsed = internalParser(await json(req))
       await next(parsed)
     } catch (e) {
-      res.status(400)
-      res.json({ error: "Could not validate body" })
+      send(res, 400, { error: "Could not validate body" })
     }
   }
 }
