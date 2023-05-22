@@ -442,36 +442,3 @@ export function middleware<TReq, TRes, TArgs extends unknown[] = []>(options?: P
 
   return convertInternal(chain)
 }
-
-export function createFakeMiddlewareChain<
-  TReq,
-  TRes,
-  TArgs extends unknown[],
-  TRets extends unknown[],
-  TRootArgs extends unknown[]
->(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs> {
-  // lazy init
-  // eslint-disable-next-line prefer-const
-  let middleware: MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
-
-  const run = async () => {
-    // do nothing
-  }
-
-  const pipe = <TArray extends Middleware<TReq, TRes, TRets, unknown[]>[]>(): MiddlewareChain<
-    TReq,
-    TRes,
-    ComposedRets<TArray>,
-    TRootArgs
-  > => {
-    // this middleware will never run, so we can just return it
-    return middleware as unknown as MiddlewareChain<TReq, TRes, ComposedRets<TArray>, TRootArgs>
-  }
-
-  const opts = (): MiddlewareChain<TReq, TRes, TArgs, TRootArgs> => {
-    return middleware
-  }
-
-  middleware = Object.assign(run, { pipe, opts })
-  return middleware
-}
