@@ -1,4 +1,5 @@
 export * from "./middleware"
 export * from "./adapters/common-adapter"
-export * from "./adapters/validation-adapter"
+export * from "./adapters/iron-session-adapter"
 export * from "./adapters/next-auth-adapter"
+export * from "./adapters/validation-adapter"
