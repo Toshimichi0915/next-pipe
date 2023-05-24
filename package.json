@@ -1,6 +1,6 @@
 {
   "name": "next-pipe",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Provides a simple way to pipe data through a series of functions.",
   "main": "dist/index.js",
   "scripts": {
