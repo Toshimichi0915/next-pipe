@@ -11,11 +11,9 @@ export interface MethodHandler<TReq, TRes, TArgs extends unknown[], TRootArgs ex
   delete(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
 }
 
-export function withMethods<
-  TReq extends Request | IncomingMessage,
-  TRes extends ServerResponse,
-  TArgs extends unknown[]
->(f: (handler: MethodHandler<TReq, TRes, TArgs, TArgs>) => unknown): Middleware<TReq, TRes, TArgs> {
+export function withMethods<TReq extends IncomingMessage, TRes extends ServerResponse, TArgs extends unknown[]>(
+  f: (handler: MethodHandler<TReq, TRes, TArgs, TArgs>) => unknown
+): Middleware<TReq, TRes, TArgs> {
   const methods: { [key in string]?: MiddlewareChain<TReq, TRes, TArgs, TArgs> } = {}
 
   const createMiddleware = (method: string) => {
