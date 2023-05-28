@@ -1,32 +1,27 @@
-import { describe, it } from "vitest"
-import fetch from "node-fetch"
+import { describe, it, vitest } from "vitest"
 import { z } from "zod"
 import yup from "yup"
 import { middleware, withValidatedBody } from "../../src"
-import { IncomingMessage, ServerResponse, createServer } from "http"
-import { send } from "micro"
-import listen from "test-listen"
+import { ServerResponse } from "http"
 
 describe("withValidatedBody", () => {
+  const res = {
+    setHeader: vitest.fn(),
+    end: vitest.fn(),
+  }
+
   it("zod", async ({ expect }) => {
     const zodSchema = z.object({
       name: z.string(),
     })
 
-    const server = createServer(
-      middleware<IncomingMessage, ServerResponse>()
-        .pipe(withValidatedBody(zodSchema))
-        .pipe((req, res, next, body) => {
-          send(res, 200, body)
-        })
-    )
+    const f = middleware<{ body: unknown }, ServerResponse>()
+      .pipe(withValidatedBody(zodSchema))
+      .pipe((req, res, next, body) => body)
 
-    const response = await fetch(await listen(server), {
-      method: "POST",
-      body: JSON.stringify({ name: "abc", age: 123 }),
-    }).then((res) => res.json())
+    const result = await f({ body: { name: "abc" } }, res as never)
 
-    expect(response).toEqual({
+    expect(result).toEqual({
       name: "abc",
     })
   })
@@ -36,18 +31,13 @@ describe("withValidatedBody", () => {
       name: yup.string().required(),
     })
 
-    const server = createServer(
-      middleware<IncomingMessage, ServerResponse>()
-        .pipe(withValidatedBody(yupSchema))
-        .pipe((req, res, next, body) => send(res, 200, body))
-    )
+    const f = middleware<{ body: unknown }, ServerResponse>()
+      .pipe(withValidatedBody(yupSchema))
+      .pipe((req, res, next, body) => body)
 
-    const response = await fetch(await listen(server), {
-      method: "POST",
-      body: JSON.stringify({ name: "abc" }),
-    })
+    const result = await f({ body: { name: "abc" } }, res as never)
 
-    expect(await response.json()).toEqual({
+    expect(result).toEqual({
       name: "abc",
     })
   })
@@ -58,17 +48,12 @@ describe("withValidatedBody", () => {
       throw new Error("Invalid value")
     }
 
-    const server = createServer(
-      middleware<IncomingMessage, ServerResponse>()
-        .pipe(withValidatedBody(parser))
-        .pipe((req, res, next, body) => send(res, 200, body))
-    )
+    const f = middleware<{ body: unknown }, ServerResponse>()
+      .pipe(withValidatedBody(parser))
+      .pipe((req, res, next, body) => body)
 
-    const response = await fetch(await listen(server), {
-      method: "POST",
-      body: JSON.stringify("abc"),
-    })
+    const result = await f({ body: "abc" }, res as never)
 
-    expect(await response.text()).toEqual("abc nyoom")
+    expect(result).toEqual("abc nyoom")
   })
 })

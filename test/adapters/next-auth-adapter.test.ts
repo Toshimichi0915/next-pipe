@@ -3,10 +3,6 @@ import { afterAll, beforeAll, describe, it, vitest } from "vitest"
 import { NextPipe, middleware, withServerSession } from "../../src"
 import core from "next-auth/core"
 import { AuthOptions, Session } from "next-auth"
-import createFetchMock from "vitest-fetch-mock"
-
-const fetchMocker = createFetchMock(vitest)
-fetchMocker.enableMocks()
 
 const authOptions = {
   providers: [],
@@ -43,10 +39,8 @@ describe("next-auth", () => {
     res.status.mockReturnValue(res)
     res.json.mockReturnValue(res)
 
-    expect(await f(req as unknown as NextApiRequest, res as unknown as NextApiResponse, true)).toEqual(undefined)
-    expect(await f(req as unknown as NextApiRequest, res as unknown as NextApiResponse, false)).toEqual(
-      "Hello, world undefined"
-    )
+    expect(await f(req as never, res as never, true)).toEqual(undefined)
+    expect(await f(req as never, res as never, false)).toEqual("Hello, world undefined")
     expect(res.status.mock.calls[0][0]).toEqual(401)
     expect(res.status.mock.calls[1][0]).toEqual(200)
   })
@@ -67,12 +61,7 @@ describe("next-auth", () => {
     const spy = vitest.spyOn(core, "AuthHandler")
     spy.mockReturnValue(mock as never)
 
-    expect(await f(req as unknown as NextApiRequest, res as unknown as NextApiResponse, true)).toEqual(
-      "Hello, world Toshimichi"
-    )
-
-    expect(await f(req as unknown as NextApiRequest, res as unknown as NextApiResponse, false)).toEqual(
-      "Hello, world Toshimichi"
-    )
+    expect(await f(req as never, res as never, true)).toEqual("Hello, world Toshimichi")
+    expect(await f(req as never, res as never, false)).toEqual("Hello, world Toshimichi")
   })
 })

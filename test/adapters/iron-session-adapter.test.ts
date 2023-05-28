@@ -3,11 +3,13 @@ import { describe, it } from "vitest"
 import { middleware, withIronSession } from "../../src"
 
 describe("iron-session", () => {
-  it("create", async ({ expect }) => {
-    const req = {
-      headers: {},
-    }
+  const req = {
+    headers: {},
+  }
 
+  const res = {}
+
+  it("create", async ({ expect }) => {
     let s: unknown
     let called = false
     const f = middleware<IncomingMessage, ServerResponse<IncomingMessage>>()
@@ -17,7 +19,7 @@ describe("iron-session", () => {
         called = true
       })
 
-    await f(req as unknown as IncomingMessage, {} as ServerResponse<IncomingMessage>)
+    await f(req as never, res as never)
     expect(called).toBe(true)
     expect(s).toBeDefined()
   })

@@ -1,52 +1,46 @@
 import { z } from "zod"
-import { describe, it } from "vitest"
+import { describe, it, vitest } from "vitest"
 import { middleware, withMethods, withValidatedBody } from "../../src"
-import { IncomingMessage, ServerResponse, createServer } from "http"
-import { send } from "micro"
-import fetch from "node-fetch"
-import listen from "test-listen"
+import { ServerResponse } from "http"
 
 describe("withMethods", () => {
+  const res = {
+    setHeader: vitest.fn(),
+    statusCode: vitest.fn(),
+    end: vitest.fn(),
+  }
+
   it("get", async ({ expect }) => {
-    const server = createServer(
-      middleware<IncomingMessage, ServerResponse>().pipe(
-        withMethods(({ get, put }) => {
-          get().pipe((req, res) => {
-            send(res, 200, "Hello, world")
-          })
-          put().pipe((req, res) => {
-            send(res, 200, "Hello, Toshimichi")
-          })
+    const f = middleware<{ method: string }, ServerResponse>().pipe(
+      withMethods(({ get, put }) => {
+        get().pipe((req, res) => {
+          res.end("Hello, world")
         })
-      )
+        put().pipe((req, res) => {
+          res.end("Hello, world")
+        })
+      })
     )
 
-    const response = await fetch(await listen(server), {
-      method: "GET",
-    }).then((res) => res.text())
-
-    expect(response).toEqual("Hello, world")
+    await f({ method: "GET" }, res as never)
+    expect(res.end.mock.calls[0][0]).toEqual("Hello, world")
   })
 
   it("invalid", async ({ expect }) => {
-    const server = createServer(
-      middleware<IncomingMessage, ServerResponse>().pipe(
-        withMethods(({ get, put }) => {
-          get().pipe((req, res) => {
-            send(res, 200, "Hello, world")
-          })
-          put().pipe((req, res) => {
-            send(res, 200, "Hello, Toshimichi")
-          })
+    const f = middleware<{ method: string }, ServerResponse>().pipe(
+      withMethods(({ get, put }) => {
+        get().pipe((req, res) => {
+          res.end("Hello, world")
         })
-      )
+        put().pipe((req, res) => {
+          res.end("Hello, world")
+        })
+      })
     )
 
-    const response = await fetch(await listen(server), {
-      method: "POST",
-    })
+    await f({ method: "POST" }, res as never)
 
-    expect(response.status).toEqual(405)
+    expect(res.statusCode).toEqual(405)
   })
 
   it("args", async ({ expect }) => {
@@ -54,23 +48,18 @@ describe("withMethods", () => {
       name: z.string(),
     })
 
-    const server = createServer(
-      middleware<IncomingMessage, ServerResponse>()
-        .pipe(withValidatedBody(schema))
-        .pipe(
-          withMethods(({ put }) => {
-            put().pipe((req, res, next, body) => {
-              send(res, 200, "Hello, " + body.name)
-            })
+    const f = middleware<{ method: string; body: unknown }, ServerResponse>()
+      .pipe(withValidatedBody(schema))
+      .pipe(
+        withMethods(({ put }) => {
+          put().pipe((req, res, next, body) => {
+            res.end(`Hello, ${body.name}`)
           })
-        )
-    )
+        })
+      )
 
-    const response = await fetch(await listen(server), {
-      method: "PUT",
-      body: JSON.stringify({ name: "Toshimichi" }),
-    })
+    await f({ method: "PUT", body: { name: "Toshimichi" } }, res as never)
 
-    expect(await response.text()).toEqual("Hello, Toshimichi")
+    expect(res.end.mock.calls[2][0]).toEqual("Hello, Toshimichi")
   })
 })

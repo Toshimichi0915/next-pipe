@@ -1,7 +1,5 @@
-import { IncomingMessage } from "http"
 import { Middleware, MiddlewareChain, middleware } from "../middleware"
 import { ServerResponse } from "http"
-import { send } from "micro"
 
 export interface MethodHandler<TReq, TRes, TArgs extends unknown[], TRootArgs extends unknown[]> {
   get(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
@@ -11,9 +9,11 @@ export interface MethodHandler<TReq, TRes, TArgs extends unknown[], TRootArgs ex
   delete(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
 }
 
-export function withMethods<TReq extends IncomingMessage, TRes extends ServerResponse, TArgs extends unknown[]>(
-  f: (handler: MethodHandler<TReq, TRes, TArgs, TArgs>) => unknown
-): Middleware<TReq, TRes, TArgs> {
+export function withMethods<
+  TReq extends { method?: string | undefined },
+  TRes extends ServerResponse,
+  TArgs extends unknown[]
+>(f: (handler: MethodHandler<TReq, TRes, TArgs, TArgs>) => unknown): Middleware<TReq, TRes, TArgs> {
   const methods: { [key in string]?: MiddlewareChain<TReq, TRes, TArgs, TArgs> } = {}
 
   const createMiddleware = (method: string) => {
@@ -35,11 +35,13 @@ export function withMethods<TReq extends IncomingMessage, TRes extends ServerRes
   f(handler)
 
   return async (req: TReq, res: TRes, next, ...args: TArgs) => {
-    const result = req.method && methods[req.method]
+    const result = req.method && methods[req.method.toUpperCase()]
     if (result) {
       return result(req, res, ...args)
     } else {
-      send(res, 405, { error: "Method not allowed" })
+      res.statusCode = 405
+      res.setHeader("Content-Type", "application/json")
+      res.end(JSON.stringify({ error: "Method not allowed" }))
     }
   }
 }
