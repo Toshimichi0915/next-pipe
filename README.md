@@ -2,6 +2,7 @@
 
 [![Unit Test](https://github.com/Toshimichi0915/next-pipe/actions/workflows/node.js.yml/badge.svg)](https://github.com/Toshimichi0915/next-pipe/actions/workflows/node.js.yml)
 [![npm version](https://badge.fury.io/js/next-pipe.svg)](https://badge.fury.io/js/next-pipe)
+[![codecov](https://codecov.io/gh/Toshimichi0915/next-pipe/branch/main/graph/badge.svg?token=5GCGOI3A0E)](https://codecov.io/gh/Toshimichi0915/next-pipe)
 
 Provides a simple way to pipe data through a series of functions.
 
