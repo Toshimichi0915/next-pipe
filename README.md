@@ -11,6 +11,14 @@ Provides a simple way to pipe data through a series of functions.
 npm install next-pipe
 ```
 
+## Features
+
+- 🌈 Support for both CommonJS and ES Modules
+
+- 🚀 Built with Typescript
+
+- 📦 Built-in Next-Auth and Iron-Session adapters, as well as utility adapters
+
 ## Usage
 
 - [Basic Usage](#basic-usage)
