@@ -18,7 +18,15 @@
   "files": [
     "dist"
   ],
-  "keywords": ["middleware", "typescript", "nextjs", "pipe", "compose", "functional", "functional-programming"],
+  "keywords": [
+    "middleware",
+    "typescript",
+    "nextjs",
+    "pipe",
+    "compose",
+    "functional",
+    "functional-programming"
+  ],
   "author": "Toshimichi <main@toshimichi.net> (https://toshimichi.net/)",
   "license": "MIT",
   "homepage": "https://github.com/Toshimichi0915/next-pipe",

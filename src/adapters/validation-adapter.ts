@@ -57,6 +57,7 @@ export function withValidatedBody<TReq extends { body?: unknown }, TRes extends 
       const parsed = internalParser(req.body)
       await next(parsed)
     } catch (e) {
+      res.statusCode = 400
       res.setHeader("Content-Type", "application/json")
       res.end(JSON.stringify({ error: "Could not validate body" }))
     }

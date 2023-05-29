@@ -27,15 +27,15 @@ const f = middleware<NextApiRequest, NextApiResponse, [boolean]>()
   })
 
 describe("next-auth", () => {
-  const req = { headers: {} }
-  const res = {
-    setHeader: vitest.fn(),
-    getHeader: vitest.fn(),
-    status: vitest.fn(),
-    json: vitest.fn(),
-  }
-
   it("no session", async ({ expect }) => {
+    const req = { headers: {} }
+    const res = {
+      setHeader: vitest.fn(),
+      getHeader: vitest.fn(),
+      status: vitest.fn(),
+      json: vitest.fn(),
+    }
+
     res.status.mockReturnValue(res)
     res.json.mockReturnValue(res)
 
@@ -46,6 +46,17 @@ describe("next-auth", () => {
   })
 
   it("session", async ({ expect }) => {
+    const req = { headers: {} }
+    const res = {
+      setHeader: vitest.fn(),
+      getHeader: vitest.fn(),
+      status: vitest.fn(),
+      json: vitest.fn(),
+    }
+
+    res.status.mockReturnValue(res)
+    res.json.mockReturnValue(res)
+
     const mock = {
       body: {
         user: {

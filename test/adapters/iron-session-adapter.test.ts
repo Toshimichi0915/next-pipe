@@ -3,13 +3,13 @@ import { describe, it } from "vitest"
 import { middleware, withIronSession } from "../../src"
 
 describe("iron-session", () => {
-  const req = {
-    headers: {},
-  }
-
-  const res = {}
-
   it("create", async ({ expect }) => {
+    const req = {
+      headers: {},
+    }
+
+    const res = {}
+
     let s: unknown
     let called = false
     const f = middleware<IncomingMessage, ServerResponse<IncomingMessage>>()

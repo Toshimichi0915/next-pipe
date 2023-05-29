@@ -5,12 +5,12 @@ import { middleware, withValidatedBody } from "../../src"
 import { ServerResponse } from "http"
 
 describe("withValidatedBody", () => {
-  const res = {
-    setHeader: vitest.fn(),
-    end: vitest.fn(),
-  }
-
   it("zod", async ({ expect }) => {
+    const res = {
+      setHeader: vitest.fn(),
+      end: vitest.fn(),
+    }
+
     const zodSchema = z.object({
       name: z.string(),
     })
@@ -27,6 +27,11 @@ describe("withValidatedBody", () => {
   })
 
   it("yup", async ({ expect }) => {
+    const res = {
+      setHeader: vitest.fn(),
+      end: vitest.fn(),
+    }
+
     const yupSchema = yup.object({
       name: yup.string().required(),
     })
@@ -42,7 +47,52 @@ describe("withValidatedBody", () => {
     })
   })
 
+  it("zod invalid", async ({ expect }) => {
+    const res = {
+      setHeader: vitest.fn(),
+      statusCode: 200,
+      end: vitest.fn(),
+    }
+
+    const schema = z.object({
+      name: z.string(),
+    })
+
+    const f = middleware<{ body: unknown }, ServerResponse>()
+      .pipe(withValidatedBody(schema))
+      .pipe((req, res, next, body) => body)
+
+    await f({ body: { name: 123 } }, res as never)
+
+    expect(res.statusCode).toEqual(400)
+  })
+
+  it("yup invalid", async ({ expect }) => {
+    const res = {
+      setHeader: vitest.fn(),
+      statusCode: 200,
+      end: vitest.fn(),
+    }
+
+    const schema = yup.object({
+      name: yup.string().required(),
+    })
+
+    const f = middleware<{ body: unknown }, ServerResponse>()
+      .pipe(withValidatedBody(schema))
+      .pipe((req, res, next, body) => body)
+
+    await f({ body: { age: "heheheha" } }, res as never)
+
+    expect(res.statusCode).toEqual(400)
+  })
+
   it("custom", async ({ expect }) => {
+    const res = {
+      setHeader: vitest.fn(),
+      end: vitest.fn(),
+    }
+
     const parser = (value: unknown) => {
       if (typeof value === "string") return value + " nyoom"
       throw new Error("Invalid value")
