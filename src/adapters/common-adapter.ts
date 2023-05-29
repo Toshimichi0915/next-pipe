@@ -1,14 +1,46 @@
 import { Middleware, MiddlewareChain, middleware } from "../middleware"
 import { ServerResponse } from "http"
 
+/**
+ * A handler that can be used to define middleware for a specific HTTP method.
+ */
 export interface MethodHandler<TReq, TRes, TArgs extends unknown[], TRootArgs extends unknown[]> {
+  /**
+   * Define a middleware for the GET method.
+   * @returns A middleware chain
+   */
   get(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
+
+  /**
+   * Define a middleware for the POST method.
+   * @returns A middleware chain
+   */
   post(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
+
+  /**
+   * Define a middleware for the PUT method.
+   * @returns A middleware chain
+   */
   put(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
+
+  /**
+   * Define a middleware for the PATCH method.
+   * @returns A middleware chain
+   */
   patch(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
+
+  /**
+   * Define a middleware for the DELETE method.
+   * @returns A middleware chain
+   */
   delete(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
 }
 
+/**
+ * Define middlewares for specific HTTP methods.
+ * @param f A function that receives a handler that can be used to define middleware for specific HTTP methods
+ * @returns A middleware
+ */
 export function withMethods<
   TReq extends { method?: string | undefined },
   TRes extends ServerResponse,

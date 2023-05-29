@@ -1,13 +1,29 @@
+/**
+ * Represents a middleware option.
+ */
 export interface MiddlewareOptions<TReq, TRes> {
+  /**
+   * Called when a middleware throws an error.
+   * @param req The request object.
+   * @param res The response object.
+   * @param e The error thrown.
+   * @returns The value to return from the middleware.
+   */
   onError(req: TReq, res: TRes, e: unknown): unknown
 }
 
-export const defaultMiddlewareOptions: MiddlewareOptions<never, never> = {
+/**
+ * The default middleware options.
+ */
+const defaultMiddlewareOptions: MiddlewareOptions<never, never> = {
   async onError() {
     // do nothing
   },
 } as const
 
+/**
+ * Represents a successful next() call.
+ */
 export interface NextPipeSuccessful {
   called: true
   successful: true
@@ -15,6 +31,9 @@ export interface NextPipeSuccessful {
   value: unknown
 }
 
+/**
+ * Represents a next() call that threw an error.
+ */
 export interface NextPipeErrored {
   called: true
   successful: false
@@ -22,22 +41,48 @@ export interface NextPipeErrored {
   error: unknown
 }
 
+/**
+ * Represents a next() call that was not called.
+ */
 export interface NextPipeStopped {
   called: false
   successful: false
   errored: false
 }
 
+/**
+ * Represents the result of a next() call.
+ */
 export type NextPipeResult = NextPipeSuccessful | NextPipeErrored | NextPipeStopped
 
+/**
+ * Represents a next() function.
+ * @param args The arguments to pass to the next middleware.
+ * @returns The result of the next() call.
+ */
 export interface NextPipe<TArgs extends unknown[]> {
   (...args: TArgs): Promise<NextPipeResult>
 }
 
+/**
+ * Represents a middleware.
+ * @param req The request object.
+ * @param res The response object.
+ * @param next The next() function.
+ * @param args The arguments passed to the middleware.
+ * @returns The value to return from the middleware.
+ */
 export interface Middleware<TReq, TRes, TArgs extends unknown[] = [], TRets extends unknown[] = []> {
   (req: TReq, res: TRes, next: NextPipe<TRets>, ...args: TArgs): unknown
 }
 
+/**
+ * Represents a middleware chain.
+ * @param req The request object.
+ * @param res The response object.
+ * @param values The values passed to the middleware.
+ * @returns The value to return from the middleware.
+ */
 export interface MiddlewareChain<TReq, TRes, TRets extends unknown[], TRootArgs extends unknown[]> {
   (req: TReq, res: TRes, ...values: TRootArgs): Promise<unknown>
 
@@ -175,14 +220,27 @@ export interface MiddlewareChain<TReq, TRes, TRets extends unknown[], TRootArgs 
     middleware10: Middleware<TReq, TRes, TRets, T10>
   ): MiddlewareChain<TReq, TRes, [...T1, ...T2, ...T3, ...T4, ...T5, ...T6, ...T7, ...T8, ...T9, ...T10], TRootArgs>
 
+  /**
+   * Adds the given middlewares to the chain.
+   * The middlewares will be executed in the order they are passed to this method.
+   * @param middlewares the middlewares to add to the chain
+   */
   pipe<TArray extends Middleware<TReq, TRes, TRets, unknown[]>[]>(
     ...middlewares: TArray
   ): MiddlewareChain<TReq, TRes, ComposedRets<TArray>, TRootArgs>
 
+  /**
+   * Sets the options for the middleware chain.
+   * This method must be called before calling `pipe` for the options to be applied.
+   * @param options new options to merge with existing ones
+   */
   opts(options: Partial<MiddlewareOptions<TReq, TRes>>): this
 }
 
-export type ComposedRets<
+/**
+ * The type of the return values of multiple middlewares composed together.
+ */
+type ComposedRets<
   TArray extends Middleware<never, never, never, unknown[]>[],
   TRets extends unknown[] = []
 > = TArray extends [infer TFirst, ...infer TRest]
@@ -193,6 +251,7 @@ export type ComposedRets<
     : never
   : TRets
 
+// https://stackoverflow.com/questions/26150232/resolve-javascript-promise-outside-the-promise-constructor-scope
 class Deferred<T> {
   readonly promise: Promise<T>
   resolve!: (value: T | PromiseLike<T>) => void
@@ -214,10 +273,12 @@ class Deferred<T> {
   }
 }
 
-export interface InternalMiddleware<TReq, TRes, TArgs extends unknown[] = [], TRets extends unknown[] = []> {
+/** This middleware is only used by {@link InternalMiddlewareChain} */
+interface InternalMiddleware<TReq, TRes, TArgs extends unknown[] = [], TRets extends unknown[] = []> {
   (req: TReq, res: TRes, next: NextPipe<TRets>, ...args: TArgs): Promise<NextPipeResult>
 }
 
+/** A internal middleware chain */
 class InternalMiddlewareChain<
   TReq,
   TRes,
@@ -225,10 +286,26 @@ class InternalMiddlewareChain<
   TRets extends unknown[],
   TRootArgs extends unknown[]
 > {
+  /**
+   * The middleware function to execute.
+   * This middleware might be composed of multiple middlewares.
+   */
   private readonly middleware: InternalMiddleware<TReq, TRes, TArgs, TRets>
+
+  /**
+   * The entrypoint of the middleware chain.
+   * This function is first called when the middleware chain is executed.
+   */
   readonly entrypoint: (req: TReq, res: TRes, ...values: TRootArgs) => Promise<unknown>
+
+  /**
+   * The options of the middleware chain.
+   */
   options: MiddlewareOptions<TReq, TRes>
 
+  /**
+   * The child middleware chain.
+   */
   private child: InternalMiddlewareChain<TReq, TRes, TRets, unknown[], TRootArgs> | undefined
 
   private constructor(
@@ -244,16 +321,21 @@ class InternalMiddlewareChain<
   pipe<TArray extends Middleware<TReq, TRes, TRets, unknown[]>[]>(
     ...middlewares: TArray
   ): InternalMiddlewareChain<TReq, TRes, TRets, ComposedRets<TArray>, TRootArgs> {
+    // compose multiple middlewares into one
     const composedMiddleware = async (
       req: TReq,
       res: TRes,
       next: (...values: ComposedRets<TArray>) => Promise<NextPipeResult>,
       ...args: TRets
     ): Promise<NextPipeResult> => {
+      /** the result values of the middlewares */
       const result: unknown[] = []
-      const queue: Deferred<NextPipeResult>[] = []
+      /** all the middlewares that called `next` */
       const promises: Promise<unknown>[] = []
+      /** promises of `next` funciton itself */
+      const queue: Deferred<NextPipeResult>[] = []
 
+      /** Tell all the middlwares that the processing of the next middleware completed */
       const resolveQueue = async (value: NextPipeResult): Promise<void> => {
         for (const def of queue.reverse()) {
           def.resolve(value)
@@ -263,6 +345,7 @@ class InternalMiddlewareChain<
         await Promise.all(promises)
       }
 
+      /** Catch errors thrown by middlewares */
       const handleError = async (e: unknown): Promise<NextPipeResult> => {
         try {
           await this.options.onError(req, res, e)
@@ -364,6 +447,13 @@ class InternalMiddlewareChain<
     return this
   }
 
+  /**
+   * Execute the middleware chain.
+   * @param req the request object
+   * @param res the response object
+   * @param values the arguments
+   * @returns the result of the middleware chain
+   */
   private async execute(req: TReq, res: TRes, ...values: TArgs): Promise<NextPipeResult> {
     const next = async (...values: TRets): Promise<NextPipeResult> => {
       if (!this.child) {
@@ -379,6 +469,11 @@ class InternalMiddlewareChain<
     return await this.middleware(req, res, next, ...values)
   }
 
+  /**
+   * Create a new middleware chain.
+   * @param options the options of the middleware chain
+   * @returns the middleware chain
+   */
   static create<TReq, TRes, TArgs extends unknown[]>(
     options: MiddlewareOptions<TReq, TRes>
   ): InternalMiddlewareChain<TReq, TRes, TArgs, TArgs, TArgs> {
@@ -413,6 +508,11 @@ class InternalMiddlewareChain<
   }
 }
 
+/**
+ * Convert {@link InternalMiddlewareChain} to {@link MiddlewareChain}
+ * @param chain the internal middleware chain
+ * @returns the middleware chain
+ */
 function convertInternal<TReq, TRes, TArgs extends unknown[], TRets extends unknown[], TRootArgs extends unknown[]>(
   chain: InternalMiddlewareChain<TReq, TRes, TArgs, TRets, TRootArgs>
 ): MiddlewareChain<TReq, TRes, TRets, TRootArgs> {
@@ -434,6 +534,11 @@ function convertInternal<TReq, TRes, TArgs extends unknown[], TRets extends unkn
   return Object.assign(entrypoint, { pipe, opts })
 }
 
+/**
+ * Create a new middleware chain.
+ * @param options the options of the middleware chain
+ * @returns the middleware chain
+ */
 export function middleware<TReq, TRes, TArgs extends unknown[] = []>(options?: Partial<MiddlewareOptions<TReq, TRes>>) {
   const chain = InternalMiddlewareChain.create<TReq, TRes, TArgs>({
     ...defaultMiddlewareOptions,
