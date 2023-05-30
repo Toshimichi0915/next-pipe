@@ -4,11 +4,6 @@ import { NextPipe, middleware, withServerSession } from "../../src"
 import core from "next-auth/core"
 import { AuthOptions, Session } from "next-auth"
 
-const authOptions = {
-  providers: [],
-  secret: "secret",
-} as AuthOptions
-
 beforeAll(() => {
   process.env.NEXTAUTH_URL = "http://localhost:3000"
 })
@@ -17,16 +12,21 @@ afterAll(() => {
   delete process.env.NEXTAUTH_URL
 })
 
-const f = middleware<NextApiRequest, NextApiResponse, [boolean]>()
-  .pipe((req, res, next: NextPipe<[Session | undefined]>, sessionRequired) =>
-    withServerSession(authOptions, sessionRequired)(req, res, next)
-  )
-  .pipe((req, res, next, session) => {
-    res.status(200).json({ message: "Hello, world" })
-    return `Hello, world ${session?.user?.name}`
-  })
-
 describe("next-auth", () => {
+  const authOptions = {
+    providers: [],
+    secret: "secret",
+  } as AuthOptions
+
+  const f = middleware<NextApiRequest, NextApiResponse, [boolean]>()
+    .pipe((req, res, next: NextPipe<[Session | undefined]>, sessionRequired) =>
+      withServerSession(authOptions, sessionRequired)(req, res, next)
+    )
+    .pipe((req, res, next, sessionRequired, session) => {
+      res.status(200).json({ message: "Hello, world" })
+      return `Hello, world ${session?.user?.name}`
+    })
+
   it("no session", async ({ expect }) => {
     const req = { headers: {} }
     const res = {

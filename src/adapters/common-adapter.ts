@@ -77,3 +77,11 @@ export function withMethods<
     }
   }
 }
+
+export function supress<TReq, TRes, TArgs extends unknown[]>(
+  middleware: Middleware<TReq, TRes, TArgs, unknown[]>
+): Middleware<TReq, TRes, TArgs, []> {
+  return async (req, res, next, ...args) => {
+    return await middleware(req, res, next, ...args)
+  }
+}

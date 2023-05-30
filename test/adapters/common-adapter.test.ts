@@ -1,13 +1,13 @@
 import { z } from "zod"
 import { describe, it, vitest } from "vitest"
-import { middleware, withMethods, withValidatedBody } from "../../src"
+import { middleware, supress, withMethods, withValidatedBody } from "../../src"
 import { ServerResponse } from "http"
 
 describe("withMethods", () => {
   it("get", async ({ expect }) => {
     const res = {
       setHeader: vitest.fn(),
-      statusCode: vitest.fn(),
+      statusCode: 0,
       end: vitest.fn(),
     }
     const f = middleware<{ method: string }, ServerResponse>().pipe(
@@ -28,7 +28,7 @@ describe("withMethods", () => {
   it("invalid", async ({ expect }) => {
     const res = {
       setHeader: vitest.fn(),
-      statusCode: vitest.fn(),
+      statusCode: 0,
       end: vitest.fn(),
     }
     const f = middleware<{ method: string }, ServerResponse>().pipe(
@@ -50,7 +50,7 @@ describe("withMethods", () => {
   it("args", async ({ expect }) => {
     const res = {
       setHeader: vitest.fn(),
-      statusCode: vitest.fn(),
+      statusCode: 0,
       end: vitest.fn(),
     }
     const schema = z.object({
@@ -70,5 +70,25 @@ describe("withMethods", () => {
     await f({ method: "PUT", body: { name: "Toshimichi" } }, res as never)
 
     expect(res.end.mock.calls[0][0]).toEqual("Hello, Toshimichi")
+  })
+
+  it("supress", async ({ expect }) => {
+    const res = {
+      setHeader: vitest.fn(),
+      statusCode: 0,
+      end: vitest.fn(),
+    }
+
+    const schema = z.object({
+      name: z.string(),
+    })
+
+    const f = middleware<{ body: unknown }, ServerResponse>()
+      .pipe(supress(withValidatedBody(schema)))
+      .pipe(() => undefined)
+
+    await f({ body: { name: "Toshimichi" } }, res as never)
+
+    expect(res.statusCode).toEqual(400)
   })
 })

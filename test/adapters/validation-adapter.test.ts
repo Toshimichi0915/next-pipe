@@ -70,7 +70,7 @@ describe("withValidatedBody", () => {
   it("yup invalid", async ({ expect }) => {
     const res = {
       setHeader: vitest.fn(),
-      statusCode: 200,
+      statusCode: 0,
       end: vitest.fn(),
     }
 
