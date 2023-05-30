@@ -83,12 +83,17 @@ describe("withMethods", () => {
       name: z.string(),
     })
 
+    const args: unknown[] = []
     const f = middleware<{ body: unknown }, ServerResponse>()
       .pipe(supress(withValidatedBody(schema)))
-      .pipe(() => undefined)
+      .pipe((...rest) => {
+        args.push(...rest)
+      })
 
     await f({ body: { name: "Toshimichi" } }, res as never)
+    expect(args.length).toEqual(3)
 
+    await f({ body: undefined }, res as never)
     expect(res.statusCode).toEqual(400)
   })
 })
