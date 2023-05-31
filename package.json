@@ -37,6 +37,9 @@
     "type": "git",
     "url": "git@github.com:Toshimichi0915/next-pipe.git"
   },
+  "publishConfig": {
+    "provenance": true
+  },
   "devDependencies": {
     "@semantic-release/git": "^10.0.1",
     "@types/node": "^20.1.4",
