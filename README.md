@@ -1,6 +1,6 @@
 # next-pipe
 
-[![Unit Test](https://github.com/Toshimichi0915/next-pipe/actions/workflows/node.js.yml/badge.svg)](https://github.com/Toshimichi0915/next-pipe/actions/workflows/node.js.yml)
+[![Unit Test](https://github.com/Toshimichi0915/next-pipe/actions/workflows/test.yml/badge.svg)](https://github.com/Toshimichi0915/next-pipe/actions/workflows/test.yml)
 [![npm version](https://badge.fury.io/js/next-pipe.svg)](https://badge.fury.io/js/next-pipe)
 [![codecov](https://codecov.io/gh/Toshimichi0915/next-pipe/branch/main/graph/badge.svg?token=5GCGOI3A0E)](https://codecov.io/gh/Toshimichi0915/next-pipe)
 
