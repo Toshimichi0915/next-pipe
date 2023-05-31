@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { describe, it, vitest } from "vitest"
-import { middleware, supress, withMethods, withValidatedBody } from "../../src"
+import { middleware, suppress, withMethods, withValidatedBody } from "../../src"
 import { ServerResponse } from "http"
 
 describe("withMethods", () => {
@@ -72,7 +72,7 @@ describe("withMethods", () => {
     expect(res.end.mock.calls[0][0]).toEqual("Hello, Toshimichi")
   })
 
-  it("supress", async ({ expect }) => {
+  it("suppress", async ({ expect }) => {
     const res = {
       setHeader: vitest.fn(),
       statusCode: 0,
@@ -85,7 +85,7 @@ describe("withMethods", () => {
 
     const args: unknown[] = []
     const f = middleware<{ body: unknown }, ServerResponse>()
-      .pipe(supress(withValidatedBody(schema)))
+      .pipe(suppress(withValidatedBody(schema)))
       .pipe((...rest) => {
         args.push(...rest)
       })
