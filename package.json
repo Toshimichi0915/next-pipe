@@ -1,6 +1,6 @@
 {
   "name": "next-pipe",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Provides a simple way to pipe data through a series of functions.",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
