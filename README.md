@@ -29,6 +29,7 @@ npm install next-pipe
 - - [Method Routing](#method-routing)
 - - [Next-Auth](#next-auth)
 - - [Iron-Session](#iron-session)
+- - [Body Validation](#body-validation)
 
 ## Basic Usage
 
@@ -203,5 +204,29 @@ export default middleware<NextApiRequest, NextApiResponse>()
   .pipe(withIronSession({ password, cookieName }))
   .pipe((req, res, session) => {
     res.send(`Your session is: ${JSON.stringify(session)}`)
+  })
+```
+
+## Body Validation
+
+This adapter validates the request body with zod or yup.
+
+```typescript
+export function withValidatedBody<TReq extends { body?: unknown }, TRes extends ServerResponse, T>(parser: Parser<T>)
+```
+
+```typescript
+import { NextApiRequest, NextApiResponse } from "next"
+import { z } from "zod"
+import { middleware, withValidatedBody } from "next-pipe"
+
+const schema = z.object({
+  name: z.string(),
+})
+
+export default middleware<NextApiRequest, NextApiResponse>()
+  .pipe(withValidatedBody(schema))
+  .pipe((req, res, next, data) => {
+    res.status(200).json({ message: `Hello, ${data.name}!` })
   })
 ```
