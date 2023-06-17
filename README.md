@@ -25,6 +25,7 @@ npm install next-pipe
 - [Basic Usage](#basic-usage)
 - [Creating custom middlwares](#custom-middleware)
 - Adapters
+- - [Result Suppressing](#result-suppressing)
 - - [Method Routing](#method-routing)
 - - [Next-Auth](#next-auth)
 - - [Iron-Session](#iron-session)
@@ -83,6 +84,35 @@ export function withEmptyMiddleware(): Middleware<IncomingMessage, ServerRespons
     return "Hello, world!"
   }
 }
+```
+
+## Result Suppressing
+
+You can suppress the result of a middleware with `suppress`.
+
+This is a special middleware which takes a middleware as an argument, and returns a middleware which suppresses the result of the middleware.
+
+```typescript
+export function suppress<TReq, TRes, TArgs extends unknown[]>(middleware: Middleware<TReq, TRes, TArgs, unknown[]>)
+```
+
+In the following example, it is checked whether the user is authenticated, and if not, the response is returned with a 401 error. If the user is authenticated, the request body is validated and the next middleware is called.
+
+```typescript
+import { NextApiRequest, NextApiResponse } from "next"
+import { authOptions } from "./options"
+import { z } from "zod"
+import { middleware, suppress, withServerSession, withValidatedBody } from "next-pipe"
+
+const schema = z.object({
+  ping: z.string(),
+})
+
+export default middleware<NextApiRequest, NextApiResponse>()
+  .pipe(suppress(withServerSession(authOptions, true)), withValidatedBody(schema))
+  .pipe((req, res, next, data) => {
+    res.status(200).json({ message: `Pong, ${data.ping}!` })
+  })
 ```
 
 ## Method Routing
