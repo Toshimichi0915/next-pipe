@@ -16,6 +16,13 @@ interface YupLike<T> {
 }
 
 /**
+ * Parse the body of a request using Superstruct.
+ */
+interface SuperstructLike<T> {
+  create: (value: unknown) => T
+}
+
+/**
  * Parse the body of a request using a function.
  */
 type FunctionalParser<T> = (value: unknown) => T
@@ -23,7 +30,7 @@ type FunctionalParser<T> = (value: unknown) => T
 /**
  * A parser that can be used to parse the body of a request.
  */
-type Parser<T> = ZodLike<T> | YupLike<T> | FunctionalParser<T>
+type Parser<T> = ZodLike<T> | YupLike<T> | SuperstructLike<T> | FunctionalParser<T>
 
 /**
  * Convert a parser to a functional parser.
@@ -35,6 +42,8 @@ function uniformParser<T>(parser: Parser<T>): FunctionalParser<T> {
     return (value: unknown) => parser.parse(value)
   } else if ("cast" in parser) {
     return (value: unknown) => parser.cast(value)
+  } else if ("create" in parser) {
+    return (value: unknown) => parser.create(value)
   } else if (typeof parser === "function") {
     return parser
   }
