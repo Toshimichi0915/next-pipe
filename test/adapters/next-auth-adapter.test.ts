@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { NextRequest } from "next/server"
 import { NextApiRequest, NextApiResponse } from "next"
 import { afterAll, beforeAll, describe, it, vitest } from "vitest"
 import { NextPipe, middleware, withServerSession } from "../../src"
@@ -18,7 +20,7 @@ describe("next-auth", () => {
     secret: "secret",
   } as AuthOptions
 
-  const f = middleware<NextApiRequest, NextApiResponse, [boolean]>()
+  const f12 = middleware<NextApiRequest, NextApiResponse, [boolean]>()
     .pipe(async (req, res, next: NextPipe<[Session | undefined]>, sessionRequired) => {
       const middleware = await withServerSession(authOptions, sessionRequired)
       await middleware(req, res, next)
@@ -27,6 +29,13 @@ describe("next-auth", () => {
       res.status(200).json({ message: "Hello, world" })
       return `Hello, world ${session?.user?.name}`
     })
+
+  const f13 = middleware<Request, undefined, [boolean]>().pipe(
+    async (req, res, next: NextPipe<[Session | undefined]>, sessionRequired) => {
+      const middleware = await withServerSession(authOptions, sessionRequired)
+      await middleware(req, res, next)
+    }
+  )
 
   it("no session", async ({ expect }) => {
     const req = { headers: {} }
@@ -40,8 +49,8 @@ describe("next-auth", () => {
     res.status.mockReturnValue(res)
     res.json.mockReturnValue(res)
 
-    expect(await f(req as never, res as never, true)).toEqual(undefined)
-    expect(await f(req as never, res as never, false)).toEqual("Hello, world undefined")
+    expect(await f12(req as any, res as any, true)).toEqual(undefined)
+    expect(await f12(req as any, res as any, false)).toEqual("Hello, world undefined")
     expect(res.status.mock.calls[0][0]).toEqual(401)
     expect(res.status.mock.calls[1][0]).toEqual(200)
   })
@@ -71,9 +80,9 @@ describe("next-auth", () => {
     }
 
     const spy = vitest.spyOn(core, "AuthHandler")
-    spy.mockReturnValue(mock as never)
+    spy.mockReturnValue(mock as any)
 
-    expect(await f(req as never, res as never, true)).toEqual("Hello, world Toshimichi")
-    expect(await f(req as never, res as never, false)).toEqual("Hello, world Toshimichi")
+    expect(await f12(req as any, res as any, true)).toEqual("Hello, world Toshimichi")
+    expect(await f12(req as any, res as any, false)).toEqual("Hello, world Toshimichi")
   })
 })
