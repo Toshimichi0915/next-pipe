@@ -23,7 +23,8 @@ npm install next-pipe
 ## Usage
 
 - [Basic Usage](#basic-usage)
-- [Creating custom middlwares](#custom-middleware)
+- [Creating custom middlewares](#custom-middleware)
+- [Creating middleware providers](#middleware-provider)
 - Adapters
 - - [Result Suppressing](#result-suppressing)
 - - [Method Routing](#method-routing)
@@ -83,6 +84,22 @@ export function withEmptyMiddleware(): Middleware<IncomingMessage, ServerRespons
 
     // this return value does nothing, because the return value matters only when next() wasn't called
     return "Hello, world!"
+  }
+}
+```
+
+## Middleware Provider
+
+You can create a middleware provider, which is a function that returns a middleware, in the following way.
+
+```typescript
+import express from "express"
+import { Middleware } from "next-pipe"
+
+export async function withExpressSession(): Promise<Middleware<express.Request, express.Response, [], [ string ]>> {
+  return (req, res, next) => {
+    // do something with req.session
+    return next("session string")
   }
 }
 ```
