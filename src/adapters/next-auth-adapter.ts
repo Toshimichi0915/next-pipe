@@ -10,13 +10,13 @@ type RequireSession<T> = T extends true ? Session : Session | undefined
  * @param sessionRequired whether or not the session is required. If true and the session is not present, the request will be rejected with a 401
  * @returns A middleware
  */
-export function withServerSession<T extends boolean>(
+export async function withServerSession<T extends boolean>(
   authOptions: AuthOptions,
   sessionRequired: T
-): Middleware<NextApiRequest, NextApiResponse, [], [RequireSession<T>]> {
-  return async (req: NextApiRequest, res: NextApiResponse, next) => {
-    const { getServerSession } = await import("next-auth")
+): Promise<Middleware<NextApiRequest, NextApiResponse, [], [RequireSession<T>]>> {
+  const { getServerSession } = await import("next-auth")
 
+  return async (req: NextApiRequest, res: NextApiResponse, next) => {
     const session = await getServerSession(req, res, authOptions)
     if (sessionRequired && !session) {
       res.status(401).json({ error: "Unauthorized" })

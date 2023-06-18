@@ -8,12 +8,12 @@ import { ServerResponse } from "http"
  * @param options the options for the iron session
  * @returns A middleware
  */
-export function withIronSession(
+export async function withIronSession(
   options: IronSessionOptions
-): Middleware<Request | IncomingMessage, ServerResponse<IncomingMessage>, [], [IronSession]> {
-  return async (req, res, next) => {
-    const { getIronSession } = await import("iron-session")
+): Promise<Middleware<Request | IncomingMessage, ServerResponse<IncomingMessage>, [], [IronSession]>> {
+  const { getIronSession } = await import("iron-session")
 
+  return async (req, res, next) => {
     const session = await getIronSession(req, res, options)
     await next(session)
   }
