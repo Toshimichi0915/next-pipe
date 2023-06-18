@@ -19,9 +19,10 @@ describe("next-auth", () => {
   } as AuthOptions
 
   const f = middleware<NextApiRequest, NextApiResponse, [boolean]>()
-    .pipe((req, res, next: NextPipe<[Session | undefined]>, sessionRequired) =>
-      withServerSession(authOptions, sessionRequired)(req, res, next)
-    )
+    .pipe(async (req, res, next: NextPipe<[Session | undefined]>, sessionRequired) => {
+      const middleware = await withServerSession(authOptions, sessionRequired)
+      await middleware(req, res, next)
+    })
     .pipe((req, res, next, sessionRequired, session) => {
       res.status(200).json({ message: "Hello, world" })
       return `Hello, world ${session?.user?.name}`

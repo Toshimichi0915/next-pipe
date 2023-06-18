@@ -1,5 +1,5 @@
 import { describe, it } from "vitest"
-import { NextPipe, NextPipeResult, middleware } from "../src"
+import { middleware, NextPipe, NextPipeResult } from "../src"
 
 describe("middleware", () => {
   it("empty", async ({ expect }) => {
@@ -9,6 +9,18 @@ describe("middleware", () => {
 
   it("simple", async ({ expect }) => {
     const f = middleware<undefined, undefined>().pipe(() => "Hello, World")
+
+    expect(await f(undefined, undefined)).toBe("Hello, World")
+  })
+
+  it("provider", async ({ expect }) => {
+    const f = middleware<undefined, undefined>().pipe(
+      (async () => {
+        return (req, res, next) => {
+          return "Hello, World"
+        }
+      })()
+    )
 
     expect(await f(undefined, undefined)).toBe("Hello, World")
   })

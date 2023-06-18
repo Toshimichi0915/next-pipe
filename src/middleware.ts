@@ -77,6 +77,13 @@ export interface Middleware<TReq, TRes, TArgs extends unknown[] = [], TRets exte
 }
 
 /**
+ * Represents a middleware provider.
+ */
+export type MiddlewareProvider<TReq, TRes, TArgs extends unknown[], TRets extends unknown[]> =
+  | Middleware<TReq, TRes, TArgs, TRets>
+  | Promise<Middleware<TReq, TRes, TArgs, TRets>>
+
+/**
  * Represents a middleware chain.
  * @param req The request object.
  * @param res The response object.
@@ -91,33 +98,33 @@ export interface MiddlewareChain<TReq, TRes, TRets extends unknown[], TRootArgs 
   // https://github.com/gcanti/fp-ts/blob/master/src/function.ts#L397-L689
   // https://github.com/ReactiveX/rxjs/pull/7224
   pipe<T1 extends unknown[]>(
-    middleware1: Middleware<TReq, TRes, TRets, T1>
+    middleware1: MiddlewareProvider<TReq, TRes, TRets, T1>
   ): MiddlewareChain<TReq, TRes, [...TRets, ...T1], TRootArgs>
 
   pipe<T1 extends unknown[], T2 extends unknown[]>(
-    middleware1: Middleware<TReq, TRes, TRets, T1>,
-    middleware2: Middleware<TReq, TRes, TRets, T2>
+    middleware1: MiddlewareProvider<TReq, TRes, TRets, T1>,
+    middleware2: MiddlewareProvider<TReq, TRes, TRets, T2>
   ): MiddlewareChain<TReq, TRes, [...TRets, ...T1, ...T2], TRootArgs>
 
   pipe<T1 extends unknown[], T2 extends unknown[], T3 extends unknown[]>(
-    middleware1: Middleware<TReq, TRes, TRets, T1>,
-    middleware2: Middleware<TReq, TRes, TRets, T2>,
-    middleware3: Middleware<TReq, TRes, TRets, T3>
+    middleware1: MiddlewareProvider<TReq, TRes, TRets, T1>,
+    middleware2: MiddlewareProvider<TReq, TRes, TRets, T2>,
+    middleware3: MiddlewareProvider<TReq, TRes, TRets, T3>
   ): MiddlewareChain<TReq, TRes, [...TRets, ...T1, ...T2, ...T3], TRootArgs>
 
   pipe<T1 extends unknown[], T2 extends unknown[], T3 extends unknown[], T4 extends unknown[]>(
-    middleware1: Middleware<TReq, TRes, TRets, T1>,
-    middleware2: Middleware<TReq, TRes, TRets, T2>,
-    middleware3: Middleware<TReq, TRes, TRets, T3>,
-    middleware4: Middleware<TReq, TRes, TRets, T4>
+    middleware1: MiddlewareProvider<TReq, TRes, TRets, T1>,
+    middleware2: MiddlewareProvider<TReq, TRes, TRets, T2>,
+    middleware3: MiddlewareProvider<TReq, TRes, TRets, T3>,
+    middleware4: MiddlewareProvider<TReq, TRes, TRets, T4>
   ): MiddlewareChain<TReq, TRes, [...TRets, ...T1, ...T2, ...T3, ...T4], TRootArgs>
 
   pipe<T1 extends unknown[], T2 extends unknown[], T3 extends unknown[], T4 extends unknown[], T5 extends unknown[]>(
-    middleware1: Middleware<TReq, TRes, TRets, T1>,
-    middleware2: Middleware<TReq, TRes, TRets, T2>,
-    middleware3: Middleware<TReq, TRes, TRets, T3>,
-    middleware4: Middleware<TReq, TRes, TRets, T4>,
-    middleware5: Middleware<TReq, TRes, TRets, T5>
+    middleware1: MiddlewareProvider<TReq, TRes, TRets, T1>,
+    middleware2: MiddlewareProvider<TReq, TRes, TRets, T2>,
+    middleware3: MiddlewareProvider<TReq, TRes, TRets, T3>,
+    middleware4: MiddlewareProvider<TReq, TRes, TRets, T4>,
+    middleware5: MiddlewareProvider<TReq, TRes, TRets, T5>
   ): MiddlewareChain<TReq, TRes, [...TRets, ...T1, ...T2, ...T3, ...T4, ...T5], TRootArgs>
 
   pipe<
@@ -128,12 +135,12 @@ export interface MiddlewareChain<TReq, TRes, TRets extends unknown[], TRootArgs 
     T5 extends unknown[],
     T6 extends unknown[]
   >(
-    middleware1: Middleware<TReq, TRes, TRets, T1>,
-    middleware2: Middleware<TReq, TRes, TRets, T2>,
-    middleware3: Middleware<TReq, TRes, TRets, T3>,
-    middleware4: Middleware<TReq, TRes, TRets, T4>,
-    middleware5: Middleware<TReq, TRes, TRets, T5>,
-    middleware6: Middleware<TReq, TRes, TRets, T6>
+    middleware1: MiddlewareProvider<TReq, TRes, TRets, T1>,
+    middleware2: MiddlewareProvider<TReq, TRes, TRets, T2>,
+    middleware3: MiddlewareProvider<TReq, TRes, TRets, T3>,
+    middleware4: MiddlewareProvider<TReq, TRes, TRets, T4>,
+    middleware5: MiddlewareProvider<TReq, TRes, TRets, T5>,
+    middleware6: MiddlewareProvider<TReq, TRes, TRets, T6>
   ): MiddlewareChain<TReq, TRes, [...TRets, ...T1, ...T2, ...T3, ...T4, ...T5, ...T6], TRootArgs>
 
   pipe<
@@ -145,13 +152,13 @@ export interface MiddlewareChain<TReq, TRes, TRets extends unknown[], TRootArgs 
     T6 extends unknown[],
     T7 extends unknown[]
   >(
-    middleware1: Middleware<TReq, TRes, TRets, T1>,
-    middleware2: Middleware<TReq, TRes, TRets, T2>,
-    middleware3: Middleware<TReq, TRes, TRets, T3>,
-    middleware4: Middleware<TReq, TRes, TRets, T4>,
-    middleware5: Middleware<TReq, TRes, TRets, T5>,
-    middleware6: Middleware<TReq, TRes, TRets, T6>,
-    middleware7: Middleware<TReq, TRes, TRets, T6>
+    middleware1: MiddlewareProvider<TReq, TRes, TRets, T1>,
+    middleware2: MiddlewareProvider<TReq, TRes, TRets, T2>,
+    middleware3: MiddlewareProvider<TReq, TRes, TRets, T3>,
+    middleware4: MiddlewareProvider<TReq, TRes, TRets, T4>,
+    middleware5: MiddlewareProvider<TReq, TRes, TRets, T5>,
+    middleware6: MiddlewareProvider<TReq, TRes, TRets, T6>,
+    middleware7: MiddlewareProvider<TReq, TRes, TRets, T6>
   ): MiddlewareChain<TReq, TRes, [...TRets, ...T1, ...T2, ...T3, ...T4, ...T5, ...T6, ...T7], TRootArgs>
 
   pipe<
@@ -164,14 +171,14 @@ export interface MiddlewareChain<TReq, TRes, TRets extends unknown[], TRootArgs 
     T7 extends unknown[],
     T8 extends unknown[]
   >(
-    middleware1: Middleware<TReq, TRes, TRets, T1>,
-    middleware2: Middleware<TReq, TRes, TRets, T2>,
-    middleware3: Middleware<TReq, TRes, TRets, T3>,
-    middleware4: Middleware<TReq, TRes, TRets, T4>,
-    middleware5: Middleware<TReq, TRes, TRets, T5>,
-    middleware6: Middleware<TReq, TRes, TRets, T6>,
-    middleware7: Middleware<TReq, TRes, TRets, T7>,
-    middleware8: Middleware<TReq, TRes, TRets, T8>
+    middleware1: MiddlewareProvider<TReq, TRes, TRets, T1>,
+    middleware2: MiddlewareProvider<TReq, TRes, TRets, T2>,
+    middleware3: MiddlewareProvider<TReq, TRes, TRets, T3>,
+    middleware4: MiddlewareProvider<TReq, TRes, TRets, T4>,
+    middleware5: MiddlewareProvider<TReq, TRes, TRets, T5>,
+    middleware6: MiddlewareProvider<TReq, TRes, TRets, T6>,
+    middleware7: MiddlewareProvider<TReq, TRes, TRets, T7>,
+    middleware8: MiddlewareProvider<TReq, TRes, TRets, T8>
   ): MiddlewareChain<TReq, TRes, [...TRets, ...T1, ...T2, ...T3, ...T4, ...T5, ...T6, ...T7, ...T8], TRootArgs>
 
   pipe<
@@ -185,15 +192,15 @@ export interface MiddlewareChain<TReq, TRes, TRets extends unknown[], TRootArgs 
     T8 extends unknown[],
     T9 extends unknown[]
   >(
-    middleware1: Middleware<TReq, TRes, TRets, T1>,
-    middleware2: Middleware<TReq, TRes, TRets, T2>,
-    middleware3: Middleware<TReq, TRes, TRets, T3>,
-    middleware4: Middleware<TReq, TRes, TRets, T4>,
-    middleware5: Middleware<TReq, TRes, TRets, T5>,
-    middleware6: Middleware<TReq, TRes, TRets, T6>,
-    middleware7: Middleware<TReq, TRes, TRets, T7>,
-    middleware8: Middleware<TReq, TRes, TRets, T8>,
-    middleware9: Middleware<TReq, TRes, TRets, T9>
+    middleware1: MiddlewareProvider<TReq, TRes, TRets, T1>,
+    middleware2: MiddlewareProvider<TReq, TRes, TRets, T2>,
+    middleware3: MiddlewareProvider<TReq, TRes, TRets, T3>,
+    middleware4: MiddlewareProvider<TReq, TRes, TRets, T4>,
+    middleware5: MiddlewareProvider<TReq, TRes, TRets, T5>,
+    middleware6: MiddlewareProvider<TReq, TRes, TRets, T6>,
+    middleware7: MiddlewareProvider<TReq, TRes, TRets, T7>,
+    middleware8: MiddlewareProvider<TReq, TRes, TRets, T8>,
+    middleware9: MiddlewareProvider<TReq, TRes, TRets, T9>
   ): MiddlewareChain<TReq, TRes, [...TRets, ...T1, ...T2, ...T3, ...T4, ...T5, ...T6, ...T7, ...T8, ...T9], TRootArgs>
 
   pipe<
@@ -208,16 +215,16 @@ export interface MiddlewareChain<TReq, TRes, TRets extends unknown[], TRootArgs 
     T9 extends unknown[],
     T10 extends unknown[]
   >(
-    middleware1: Middleware<TReq, TRes, TRets, T1>,
-    middleware2: Middleware<TReq, TRes, TRets, T2>,
-    middleware3: Middleware<TReq, TRes, TRets, T3>,
-    middleware4: Middleware<TReq, TRes, TRets, T4>,
-    middleware5: Middleware<TReq, TRes, TRets, T5>,
-    middleware6: Middleware<TReq, TRes, TRets, T6>,
-    middleware7: Middleware<TReq, TRes, TRets, T7>,
-    middleware8: Middleware<TReq, TRes, TRets, T8>,
-    middleware9: Middleware<TReq, TRes, TRets, T9>,
-    middleware10: Middleware<TReq, TRes, TRets, T10>
+    middleware1: MiddlewareProvider<TReq, TRes, TRets, T1>,
+    middleware2: MiddlewareProvider<TReq, TRes, TRets, T2>,
+    middleware3: MiddlewareProvider<TReq, TRes, TRets, T3>,
+    middleware4: MiddlewareProvider<TReq, TRes, TRets, T4>,
+    middleware5: MiddlewareProvider<TReq, TRes, TRets, T5>,
+    middleware6: MiddlewareProvider<TReq, TRes, TRets, T6>,
+    middleware7: MiddlewareProvider<TReq, TRes, TRets, T7>,
+    middleware8: MiddlewareProvider<TReq, TRes, TRets, T8>,
+    middleware9: MiddlewareProvider<TReq, TRes, TRets, T9>,
+    middleware10: MiddlewareProvider<TReq, TRes, TRets, T10>
   ): MiddlewareChain<
     TReq,
     TRes,
@@ -230,7 +237,7 @@ export interface MiddlewareChain<TReq, TRes, TRets extends unknown[], TRootArgs 
    * The middlewares will be executed in the order they are passed to this method.
    * @param middlewares the middlewares to add to the chain
    */
-  pipe<TArray extends Middleware<TReq, TRes, TRets, unknown[]>[]>(
+  pipe<TArray extends MiddlewareProvider<TReq, TRes, TRets, unknown[]>[]>(
     ...middlewares: TArray
   ): MiddlewareChain<TReq, TRes, ComposedRets<TArray, [...TRets]>, TRootArgs>
 
@@ -246,11 +253,11 @@ export interface MiddlewareChain<TReq, TRes, TRets extends unknown[], TRootArgs 
  * The type of the return values of multiple middlewares composed together.
  */
 type ComposedRets<
-  TArray extends Middleware<never, never, never, unknown[]>[],
+  TArray extends MiddlewareProvider<never, never, never, unknown[]>[],
   TRets extends unknown[]
 > = TArray extends [infer TFirst, ...infer TRest]
-  ? TFirst extends Middleware<never, never, never, infer TFirstRets>
-    ? TRest extends Middleware<never, never, never, unknown[]>[]
+  ? TFirst extends MiddlewareProvider<never, never, never, infer TFirstRets>
+    ? TRest extends MiddlewareProvider<never, never, never, unknown[]>[]
       ? ComposedRets<TRest, [...TRets, ...TFirstRets]>
       : never
     : never
@@ -323,7 +330,7 @@ class InternalMiddlewareChain<
     this.options = options
   }
 
-  pipe<TArray extends Middleware<TReq, TRes, TRets, unknown[]>[]>(
+  pipe<TArray extends MiddlewareProvider<TReq, TRes, TRets, unknown[]>[]>(
     ...middlewares: TArray
   ): InternalMiddlewareChain<TReq, TRes, TRets, ComposedRets<TArray, [...TRets]>, TRootArgs> {
     // compose multiple middlewares into one
@@ -377,7 +384,8 @@ class InternalMiddlewareChain<
         }
       }
 
-      for (const middleware of middlewares) {
+      for (const provider of middlewares) {
+        const middleware = await provider
         const deferred = new Deferred<NextPipeResult>()
         const next = new Deferred<boolean>()
 
