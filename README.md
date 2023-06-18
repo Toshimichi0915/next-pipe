@@ -226,7 +226,7 @@ export default middleware<NextApiRequest, NextApiResponse>()
 
 ## Body Validation
 
-This adapter validates the request body with zod or yup.
+This adapter validates the request body with zod, yup, superstruct or custom validators.
 
 ```typescript
 export function withValidatedBody<TReq extends { body?: unknown }, TRes extends ServerResponse, T>(parser: Parser<T>)
