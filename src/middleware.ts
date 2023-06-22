@@ -405,8 +405,9 @@ class InternalMiddlewareChain<
 
         const promise = asyncMiddleware()
 
+        let ret
         try {
-          await Promise.race([promise, next.promise])
+          ret = await Promise.race([promise, next.promise])
         } catch (e) {
           return await handleError(e)
         }
@@ -415,13 +416,6 @@ class InternalMiddlewareChain<
         if (next.resolved) {
           promises.push(promise)
           continue
-        }
-
-        let ret
-        try {
-          ret = await promise
-        } catch (e) {
-          return await handleError(e)
         }
 
         await resolveQueue({
