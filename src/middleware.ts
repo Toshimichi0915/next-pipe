@@ -353,26 +353,33 @@ class InternalMiddlewareChain<
           def.resolve(value)
         }
 
-        await Promise.all(promises)
+        try {
+          await Promise.all(promises)
+        } catch (e) {
+          // finish all the promises even if one of them errored
+          await Promise.all(
+            promises.map((p) =>
+              p.catch(() => {
+                // do nothing
+              })
+            )
+          )
+          throw e
+        }
       }
 
       /** Catch errors thrown by middlewares */
       const handleError = async (e: unknown): Promise<NextPipeResult> => {
         try {
           await this.options.onError(req, res, e)
+          // the next middleware was not called nor errored
           await resolveQueue({
             called: false,
             successful: false,
             errored: false,
           })
-        } catch (e) {
-          // Could not handle error
-          return {
-            called: true,
-            successful: false,
-            errored: true,
-            error: e,
-          }
+        } catch (ex) {
+          // throw the original exception to prevent confusion
         }
 
         return {
@@ -417,11 +424,15 @@ class InternalMiddlewareChain<
           continue
         }
 
-        await resolveQueue({
-          called: false,
-          successful: false,
-          errored: false,
-        })
+        try {
+          await resolveQueue({
+            called: false,
+            successful: false,
+            errored: false,
+          })
+        } catch (e) {
+          return await handleError(e)
+        }
 
         return {
           called: true,
@@ -432,7 +443,11 @@ class InternalMiddlewareChain<
       }
 
       const ret = await (next as NextPipe<unknown[]>)(...args, ...result)
-      await resolveQueue(ret)
+      try {
+        await resolveQueue(ret)
+      } catch (e) {
+        return await handleError(e)
+      }
       return ret
     }
 
