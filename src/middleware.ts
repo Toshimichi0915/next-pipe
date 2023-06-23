@@ -351,7 +351,6 @@ class InternalMiddlewareChain<
       const resolveQueue = async (value: NextPipeResult): Promise<void> => {
         for (const def of queue.reverse()) {
           def.resolve(value)
-          await def.promise
         }
 
         await Promise.all(promises)
