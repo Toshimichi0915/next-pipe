@@ -16,7 +16,7 @@ describe("middleware", () => {
   it("provider", async ({ expect }) => {
     const f = middleware<undefined, undefined>().pipe(
       (async () => {
-        return (req, res, next) => {
+        return () => {
           return "Hello, World"
         }
       })()
@@ -157,16 +157,50 @@ describe("middleware", () => {
   })
 
   it("error after next", async ({ expect }) => {
+    let nextPipeResult: NextPipeResult | undefined = undefined
+    const error = new Error("Error!")
     const f = middleware<undefined, undefined>()
       .pipe(async (req, res, next) => {
+        nextPipeResult = await next()
+      })
+      .pipe(async (req, res, next) => {
         await next()
-        throw new Error("Error!")
+        throw error
       })
       .pipe(async () => {
         return "Hello, world!"
       })
 
     await expect(f(undefined, undefined)).rejects.toThrow("Error!")
+    expect(nextPipeResult).toStrictEqual({
+      successful: false,
+      errored: true,
+      called: true,
+      error: error,
+    })
+  })
+
+  it("error after next parallel", async ({ expect }) => {
+    let nextPipeResult: NextPipeResult | undefined = undefined
+    const error = new Error("Error!")
+    const f = middleware<undefined, undefined>()
+      .pipe(
+        async (req, res, next) => {
+          nextPipeResult = await next()
+          throw error
+        },
+        async (req, res, next) => {}
+      )
+      .pipe(async () => {
+        return "Hello, world!"
+      })
+
+    await expect(f(undefined, undefined)).rejects.toThrow("Error!")
+    expect(nextPipeResult).toStrictEqual({
+      successful: false,
+      errored: false,
+      called: false,
+    })
   })
 
   it("error in options", async ({ expect }) => {
@@ -178,6 +212,6 @@ describe("middleware", () => {
       throw "Hello, world!"
     })
 
-    await expect(f(undefined, undefined)).rejects.toThrow("Error!")
+    await expect(f(undefined, undefined)).rejects.toThrow("Hello, world!")
   })
 })

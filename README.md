@@ -96,7 +96,7 @@ You can create a middleware provider, which is a function that returns a middlew
 import express from "express"
 import { Middleware } from "next-pipe"
 
-export async function withExpressSession(): Promise<Middleware<express.Request, express.Response, [], [ string ]>> {
+export async function withExpressSession(): Promise<Middleware<express.Request, express.Response, [], [string]>> {
   return (req, res, next) => {
     // do something with req.session
     return next("session string")
