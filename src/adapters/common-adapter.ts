@@ -33,6 +33,12 @@ export interface MethodHandler<TReq, TRes, TArgs extends unknown[], TRootArgs ex
    * Define a middleware for the DELETE method.
    * @returns A middleware chain
    */
+  del(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
+
+  /**
+   * Define a middleware for the DELETE method.
+   * @returns A middleware chain
+   */
   delete(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
 }
 
@@ -61,6 +67,7 @@ export function withMethods<
     post: () => createMiddleware("POST"),
     put: () => createMiddleware("PUT"),
     patch: () => createMiddleware("PATCH"),
+    del: () => createMiddleware("DELETE"),
     delete: () => createMiddleware("DELETE"),
   }
 
