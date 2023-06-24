@@ -1,39 +1,62 @@
 import { Middleware, MiddlewareChain, middleware } from "../middleware"
 import { ServerResponse } from "http"
 
+// the list of all HTTP methods
+// https://github.com/for-GET/know-your-http-well/blob/master/methods.md
+const methods = [
+  // common
+  "CONNECT",
+  "DELETE",
+  "GET",
+  "HEAD",
+  "OPTIONS",
+  "POST",
+  "PUT",
+  "TRACE",
+
+  // registered
+  "ACL",
+  "BASELINE",
+  "BIND",
+  "CHECKIN",
+  "RFC3253",
+  "CHECKOUT",
+  "RFC3253",
+  "COPY",
+  "LABEL",
+  "LINK",
+  "LOCK",
+  "MERGE",
+  "MKACTIVITY",
+  "MKCALENDAR",
+  "MKCOL",
+  "MKREDIRECTREF",
+  "MKWORKSPACE",
+  "MOVE",
+  "ORDERPATCH",
+  "PATCH",
+  "PROPFIND",
+  "PROPPATCH",
+  "REBIND",
+  "REPORT",
+  "SEARCH",
+  "UNBIND",
+  "UNCHECKOUT",
+  "UNLINK",
+  "UNLOCK",
+  "UPDATE",
+  "UPDATEREDIRECTREF",
+  "VERSION",
+
+  // delete is a keyword in JavaScript, so we use DEL instead
+  "DEL",
+] as const
+
 /**
  * A handler that can be used to define middleware for a specific HTTP method.
  */
-export interface MethodHandler<TReq, TRes, TArgs extends unknown[], TRootArgs extends unknown[]> {
-  /**
-   * Define a middleware for the GET method.
-   * @returns A middleware chain
-   */
-  get(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
-
-  /**
-   * Define a middleware for the POST method.
-   * @returns A middleware chain
-   */
-  post(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
-
-  /**
-   * Define a middleware for the PUT method.
-   * @returns A middleware chain
-   */
-  put(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
-
-  /**
-   * Define a middleware for the PATCH method.
-   * @returns A middleware chain
-   */
-  patch(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
-
-  /**
-   * Define a middleware for the DELETE method.
-   * @returns A middleware chain
-   */
-  delete(): MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
+export type MethodHandler<TReq, TRes, TArgs extends unknown[], TRootArgs extends unknown[]> = {
+  [K in Lowercase<(typeof methods)[number]>]: () => MiddlewareChain<TReq, TRes, TArgs, TRootArgs>
 }
 
 /**
@@ -46,28 +69,31 @@ export function withMethods<
   TRes extends ServerResponse,
   TArgs extends unknown[]
 >(f: (handler: MethodHandler<TReq, TRes, TArgs, TArgs>) => unknown): Middleware<TReq, TRes, TArgs> {
-  const methods: { [key in string]?: MiddlewareChain<TReq, TRes, TArgs, TArgs> } = {}
+  const registry: { [key in string]?: MiddlewareChain<TReq, TRes, TArgs, TArgs> } = {}
 
   const createMiddleware = (method: string) => {
-    let current = methods[method]
+    let current = registry[method]
     if (current) throw new Error(`Method ${method} already defined`)
     current = middleware<TReq, TRes, TArgs>()
-    methods[method] = current
+    registry[method] = current
     return current
   }
 
-  const handler: MethodHandler<TReq, TRes, TArgs, TArgs> = {
-    get: () => createMiddleware("GET"),
-    post: () => createMiddleware("POST"),
-    put: () => createMiddleware("PUT"),
-    patch: () => createMiddleware("PATCH"),
-    delete: () => createMiddleware("DELETE"),
+  const handler: Partial<MethodHandler<TReq, TRes, TArgs, TArgs>> = {}
+
+  for (const method of methods) {
+    if (method === "DEL") {
+      handler.del = () => createMiddleware("DELETE")
+      continue
+    }
+
+    handler[method.toLowerCase() as Lowercase<typeof method>] = () => createMiddleware(method)
   }
 
-  f(handler)
+  f(handler as MethodHandler<TReq, TRes, TArgs, TArgs>)
 
   return async (req: TReq, res: TRes, next, ...args: TArgs) => {
-    const result = req.method && methods[req.method.toUpperCase()]
+    const result = req.method && registry[req.method.toUpperCase()]
     if (result) {
       return result(req, res, ...args)
     } else {

@@ -25,6 +25,24 @@ describe("withMethods", () => {
     expect(res.end.mock.calls[0][0]).toEqual("Hello, world")
   })
 
+  it("del", async ({ expect }) => {
+    const res = {
+      setHeader: vitest.fn(),
+      statusCode: 0,
+      end: vitest.fn(),
+    }
+    const f = middleware<{ method: string }, ServerResponse>().pipe(
+      withMethods(({ del }) => {
+        del().pipe((req, res) => {
+          res.end("Hello, world")
+        })
+      })
+    )
+
+    await f({ method: "DELETE" }, res as never)
+    expect(res.end.mock.calls[0][0]).toEqual("Hello, world")
+  })
+
   it("invalid", async ({ expect }) => {
     const res = {
       setHeader: vitest.fn(),
