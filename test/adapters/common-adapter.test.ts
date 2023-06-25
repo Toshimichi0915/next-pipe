@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from "zod"
 import { describe, it, vitest } from "vitest"
 import { middleware, suppress, withMethods, withValidatedBody } from "../../src"
@@ -21,7 +22,7 @@ describe("withMethods", () => {
       })
     )
 
-    await f({ method: "GET" }, res as never)
+    await f({ method: "GET" }, res as any)
     expect(res.end.mock.calls[0][0]).toEqual("Hello, world")
   })
 
@@ -60,7 +61,7 @@ describe("withMethods", () => {
       })
     )
 
-    await f({ method: "POST" }, res as never)
+    await f({ method: "POST" }, res as any)
 
     expect(res.statusCode).toEqual(405)
   })
@@ -85,7 +86,7 @@ describe("withMethods", () => {
         })
       )
 
-    await f({ method: "PUT", body: { name: "Toshimichi" } }, res as never)
+    await f({ method: "PUT", body: { name: "Toshimichi" } }, res as any)
 
     expect(res.end.mock.calls[0][0]).toEqual("Hello, Toshimichi")
   })
@@ -108,10 +109,10 @@ describe("withMethods", () => {
         args.push(...rest)
       })
 
-    await f({ body: { name: "Toshimichi" } }, res as never)
+    await f({ body: { name: "Toshimichi" } }, res as any)
     expect(args.length).toEqual(3)
 
-    await f({ body: undefined }, res as never)
+    await f({ body: undefined }, res as any)
     expect(res.statusCode).toEqual(400)
   })
 })
