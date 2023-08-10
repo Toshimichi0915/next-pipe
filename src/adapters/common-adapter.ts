@@ -1,4 +1,4 @@
-import { Middleware, MiddlewareChain, middleware } from "../middleware"
+import { Middleware, MiddlewareChain, middleware, MiddlewareProvider } from "../middleware"
 import { ServerResponse } from "http"
 
 // the list of all HTTP methods
@@ -105,9 +105,10 @@ export function withMethods<
 }
 
 export function suppress<TReq, TRes, TArgs extends unknown[]>(
-  middleware: Middleware<TReq, TRes, TArgs, unknown[]>
+  provider : MiddlewareProvider<TReq, TRes, TArgs, unknown[]>
 ): Middleware<TReq, TRes, TArgs, []> {
   return async (req, res, next, ...args) => {
+    const middleware = await provider
     return await middleware(req, res, () => next(), ...args)
   }
 }
