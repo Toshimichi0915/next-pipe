@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, vitest } from "vitest"
 import { z } from "zod"
 import yup from "yup"
@@ -20,7 +21,7 @@ describe("withValidatedBody", () => {
       .pipe(withValidatedBody(zodSchema))
       .pipe((req, res, next, body) => body)
 
-    const result = await f({ body: { name: "abc" } }, res as never)
+    const result = await f({ body: { name: "abc" } }, res as any)
 
     expect(result).toEqual({
       name: "abc",
@@ -41,7 +42,7 @@ describe("withValidatedBody", () => {
       .pipe(withValidatedBody(yupSchema))
       .pipe((req, res, next, body) => body)
 
-    const result = await f({ body: { name: "abc" } }, res as never)
+    const result = await f({ body: { name: "abc" } }, res as any)
 
     expect(result).toEqual({
       name: "abc",
@@ -54,15 +55,15 @@ describe("withValidatedBody", () => {
       end: vitest.fn(),
     }
 
-    const superstructSchema = superstruct.object({
+    const schema = superstruct.object({
       name: superstruct.string(),
     })
 
     const f = middleware<{ body: unknown }, ServerResponse>()
-      .pipe(withValidatedBody(superstructSchema))
+      .pipe(withValidatedBody(schema))
       .pipe((req, res, next, body) => body)
 
-    const result = await f({ body: { name: "abc" } }, res as never)
+    const result = await f({ body: { name: "abc" } }, res as any)
 
     expect(result).toEqual({
       name: "abc",
@@ -84,7 +85,7 @@ describe("withValidatedBody", () => {
       .pipe(withValidatedBody(schema))
       .pipe((req, res, next, body) => body)
 
-    await f({ body: { name: 123 } }, res as never)
+    await f({ body: { name: 123 } }, res as any)
 
     expect(res.statusCode).toEqual(400)
   })
@@ -104,7 +105,7 @@ describe("withValidatedBody", () => {
       .pipe(withValidatedBody(schema))
       .pipe((req, res, next, body) => body)
 
-    await f({ body: { age: "heheheha" } }, res as never)
+    await f({ body: { age: "heheheha" } }, res as any)
 
     expect(res.statusCode).toEqual(400)
   })
@@ -124,7 +125,7 @@ describe("withValidatedBody", () => {
       .pipe(withValidatedBody(schema))
       .pipe((req, res, next, body) => body)
 
-    await f({ body: { age: "heheheha" } }, res as never)
+    await f({ body: { age: "heheheha" } }, res as any)
 
     expect(res.statusCode).toEqual(400)
   })
@@ -144,8 +145,49 @@ describe("withValidatedBody", () => {
       .pipe(withValidatedBody(parser))
       .pipe((req, res, next, body) => body)
 
-    const result = await f({ body: "abc" }, res as never)
+    const result = await f({ body: "abc" }, res as any)
 
     expect(result).toEqual("abc nyoom")
+  })
+
+  it("Web API", async ({ expect }) => {
+    const req = new Request("https://example.com", {
+      method: "POST",
+      body: JSON.stringify({ name: "abc" }),
+    })
+
+    const schema = z.object({
+      name: z.string(),
+    })
+
+    const f = middleware<Request, undefined>()
+      .pipe(withValidatedBody(schema))
+      .pipe((req, res, next, body) => {
+        return new Response(JSON.stringify(body))
+      })
+
+    const res = (await f(req, undefined)) as Response
+    expect(await res.json()).toEqual({ name: "abc" })
+    expect(res.status).toEqual(200)
+  })
+
+  it("Web API (invalid)", async ({ expect }) => {
+    const req = new Request("https://example.com", {
+      method: "POST",
+      body: JSON.stringify({ baka: "abc" }),
+    })
+
+    const schema = z.object({
+      name: z.string(),
+    })
+
+    const f = middleware<Request, undefined>()
+      .pipe(withValidatedBody(schema))
+      .pipe((req, res, next, body) => {
+        return new Response(JSON.stringify(body))
+      })
+
+    const res = (await f(req, undefined)) as Response
+    expect(res.status).toEqual(400)
   })
 })

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { IncomingMessage, ServerResponse } from "http"
 import { describe, it } from "vitest"
 import { middleware, withIronSession } from "../../src"
@@ -19,7 +20,7 @@ describe("iron-session", () => {
         called = true
       })
 
-    await f(req as never, res as never)
+    await f(req as any, res as any)
     expect(called).toBe(true)
     expect(s).toBeDefined()
   })

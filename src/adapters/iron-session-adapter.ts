@@ -10,7 +10,7 @@ import { ServerResponse } from "http"
  */
 export async function withIronSession(
   options: IronSessionOptions
-): Promise<Middleware<Request | IncomingMessage, ServerResponse<IncomingMessage>, [], [IronSession]>> {
+): Promise<Middleware<Request | IncomingMessage, ServerResponse<IncomingMessage> | Response, [], [IronSession]>> {
   const { getIronSession } = await import("iron-session")
 
   return async (req, res, next) => {
