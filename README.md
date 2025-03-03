@@ -219,7 +219,7 @@ if (!cookieName || !password) {
 
 export default middleware<NextApiRequest, NextApiResponse>()
   .pipe(withIronSession({ password, cookieName }))
-  .pipe((req, res, session) => {
+  .pipe((req, res, next, session) => {
     res.send(`Your session is: ${JSON.stringify(session)}`)
   })
 ```
