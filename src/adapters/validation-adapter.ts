@@ -56,19 +56,32 @@ function uniformParser<T>(parser: Parser<T>): FunctionalParser<T> {
  * @param parser The parser to use
  * @returns A middleware
  */
-export function withValidatedBody<TReq extends { body?: unknown }, TRes extends ServerResponse, T>(
-  parser: Parser<T>
-): Middleware<TReq, TRes, [], [T]> {
+export function withValidatedBody<
+  TReq extends { body?: unknown } | { json(): unknown },
+  TRes extends ServerResponse | null | undefined,
+  T
+>(parser: Parser<T>): Middleware<TReq, TRes, [], [T]> {
   const internalParser = uniformParser(parser)
 
   return async (req: TReq, res: TRes, next: NextPipe<[T]>) => {
     try {
-      const parsed = internalParser(req.body)
+      let parsed: T
+      if ("json" in req) {
+        parsed = internalParser(await req.json())
+      } else if ("body" in req) {
+        parsed = internalParser(req.body)
+      } else {
+        throw new Error("The request does not have a body or a json method")
+      }
       await next(parsed)
     } catch (e) {
-      res.statusCode = 400
-      res.setHeader("Content-Type", "application/json")
-      res.end(JSON.stringify({ error: "Could not validate body" }))
+      if (res) {
+        res.statusCode = 400
+        res.setHeader("Content-Type", "application/json")
+        res.end(JSON.stringify({ error: "Could not validate body" }))
+      } else {
+        return new Response(JSON.stringify({ error: "Could not validate body" }), { status: 400 })
+      }
     }
   }
 }
