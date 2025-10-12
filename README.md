@@ -135,7 +135,7 @@ export default middleware<NextApiRequest, NextApiResponse>()
 
 ## Method Routing
 
-You can change the behavior of middlewares dpeending on the method of a request, with `withMethods`.
+You can change the behavior of middlewares depending on the method of a request, with `withMethods`.
 
 ```typescript
 function withMethods<TReq extends IncomingMessage, TRes extends ServerResponse, TArgs extends unknown[]>(
