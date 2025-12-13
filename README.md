@@ -20,6 +20,8 @@ npm install next-pipe
 
 - 📦 Built-in Next-Auth and Iron-Session adapters, as well as utility adapters
 
+- 🎉 Support for Express, Next.js, Web API and more
+
 ## Usage
 
 - [Basic Usage](#basic-usage)

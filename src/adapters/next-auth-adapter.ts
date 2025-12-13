@@ -1,4 +1,4 @@
-import { Middleware } from "../middleware"
+import { Middleware, NextPipe } from "../middleware"
 import type { AuthOptions, Session } from "next-auth"
 import type { NextApiRequest, NextApiResponse } from "next"
 
@@ -10,19 +10,31 @@ type RequireSession<T> = T extends true ? Session : Session | undefined
  * @param sessionRequired whether or not the session is required. If true and the session is not present, the request will be rejected with a 401
  * @returns A middleware
  */
-export async function withServerSession<T extends boolean>(
+export async function withServerSession<TRequireSession extends boolean>(
   authOptions: AuthOptions,
-  sessionRequired: T
-): Promise<Middleware<NextApiRequest, NextApiResponse, [], [RequireSession<T>]>> {
+  sessionRequired: TRequireSession
+): Promise<
+  Middleware<NextApiRequest, NextApiResponse, [], [RequireSession<TRequireSession>]> &
+    Middleware<unknown, undefined, [], [RequireSession<TRequireSession>]>
+> {
   const { getServerSession } = await import("next-auth")
 
-  return async (req: NextApiRequest, res: NextApiResponse, next) => {
-    const session = await getServerSession(req, res, authOptions)
-    if (sessionRequired && !session) {
-      res.status(401).json({ error: "Unauthorized" })
-      return
+  return async (req: unknown, res: NextApiResponse | undefined, next) => {
+    let session: Session | null
+    if (res) {
+      session = await getServerSession(req as NextApiRequest, res, authOptions)
+      if (sessionRequired && !session) {
+        res.status(401).json({ error: "Unauthorized" })
+        return
+      }
+    } else {
+      // web API
+      session = await getServerSession(authOptions)
+      if (sessionRequired && !session) {
+        return new Response("Unauthorized", { status: 401 })
+      }
     }
 
-    await next(session as RequireSession<T>)
+    await (next as NextPipe<[RequireSession<TRequireSession>]>)(session as RequireSession<TRequireSession>)
   }
 }
